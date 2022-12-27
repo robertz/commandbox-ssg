@@ -1,0 +1,46 @@
+{
+    "name":"cbyaml",
+    "version":"1.0.5",
+    "author":"Eric Peterson",
+    "location":"forgeboxStorage",
+    "homepage":"https://github.com/elpete/cbyaml",
+    "documentation":"https://github.com/elpete/cbyaml",
+    "repository":{
+        "type":"git",
+        "URL":"https://github.com/elpete/cbyaml"
+    },
+    "bugs":"https://github.com/elpete/cbyaml/issues",
+    "slug":"cbyaml",
+    "shortDescription":"Provides easy serialization and deserialization of yaml files",
+    "description":"Provides easy serialization and deserialization of yaml files",
+    "type":"modules",
+    "dependencies":{
+        "cbjavaloader":"^2.0.0+44"
+    },
+    "devDependencies":{
+        "coldbox":"^5.6.2+1021",
+        "testbox":"^3.0.0"
+    },
+    "installPaths":{
+        "testbox":"testbox/",
+        "coldbox":"tests/resources/app/coldbox/",
+        "cbjavaloader":"modules/cbjavaloader/"
+    },
+    "scripts":{
+        "setupTemplate":"task run taskFile=build/SetupTemplate.cfc",
+        "build:module":"task run taskFile=build/Build.cfc :projectName=`package show slug` :version=`package show version`",
+        "build:docs":"docbox generate source=. mapping=`package show slug` excludes=testbox|coldbox|modules|tests strategy-outputDir=docs strategy-projectTitle=`package show slug`@`package show version`",
+        "release":"recipe build/release.boxr",
+        "format":"cfformat run helpers,models,test-harness/tests/,ModuleConfig.cfc --overwrite",
+        "format:watch":"cfformat watch helpers,models,test-harness/tests/,ModuleConfig.cfc ./.cfformat.json",
+        "format:check":"cfformat check helpers,models,test-harness/tests/,ModuleConfig.cfc",
+        "cfpm":"echo '\".engine/WEB-INF/cfusion/bin/cfpm.sh\"' | run",
+        "cfpm:install":"echo '\".engine/WEB-INF/cfusion/bin/cfpm.sh\" install ${1}' | run",
+        "install:2021":"run-script cfpm:install zip,debugger,feed"
+    },
+    "ignore":[
+        "**/.*",
+        "test",
+        "tests"
+    ]
+}

@@ -2,7 +2,7 @@ component accessors="true" {
 
 	property name="JasperService";
 	property name="YamlService" inject="Parser@cbyaml";
-	property name="processor"   inject="processor@commandbox-jasper";
+	property name="processor"   inject="processor@commandbox-ssg";
 
 	function init() {
 		return this;

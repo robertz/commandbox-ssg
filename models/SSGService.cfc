@@ -1,6 +1,6 @@
 component accessors="true" {
 
-    property name="JasperService";
+    property name="SSGService";
     property name="YamlService" inject="Parser@cbyaml";
     property name="processor" inject="processor@commandbox-ssg";
 

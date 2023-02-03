@@ -8,7 +8,7 @@ component extends="commandbox.system.BaseCommand" {
             .onChange(function() {
                 print.line('Change detected. Rebuilding...');
                 print.line();
-                command('jasper build').run();
+                command('ssg build').run();
             })
             .start();
     }

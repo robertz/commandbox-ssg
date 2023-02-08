@@ -1,6 +1,6 @@
 component {
 
-    function run(string name = 'My Jasper Project', boolean verbose = false) {
+    function run(string name = 'SSG Project', boolean verbose = false) {
         var pwd = resolvePath('.');
 
         var contents = directoryList(pwd, false, 'name');
@@ -9,29 +9,29 @@ component {
         }
 
         command('coldbox create app')
-            .params(name = arguments.name, skeleton = 'robertz/jasper-cli', verbose = arguments.verbose)
+            .params(name = arguments.name, skeleton = 'robertz/ssg-skeleton', verbose = arguments.verbose)
             .run();
 
         var files = directoryList(
-            path = resolvePath('jasper-cli'),
+            path = resolvePath('ssg-skeleton'),
             recurse = true,
             listInfo = 'query',
             type = 'file'
         );
 
         files.each((file) => {
-            directoryCreate(file.directory.replace('/jasper-cli', ''), true, true);
+            directoryCreate(file.directory.replace('/ssg-skeleton', ''), true, true);
             fileWrite(
-                trim(file.directory.replace('/jasper-cli', '') & '/' & file.name),
+                trim(file.directory.replace('/ssg-skeleton', '') & '/' & file.name),
                 fileRead(file.directory & '/' & file.name),
                 'utf-8'
             );
-            print.greenLine('Writing ' & file.directory.replace('/jasper-cli', '') & '/' & file.name);
+            print.greenLine('Writing ' & file.directory.replace('/ssg-skeleton', '') & '/' & file.name);
         });
 
-        directoryDelete(resolvePath('jasper-cli'), true);
+        directoryDelete(resolvePath('ssg-skeleton'), true);
 
-        print.greenLine('Jasper project scaffolded.');
+        print.greenLine('SSG project scaffolded.');
     }
 
 }

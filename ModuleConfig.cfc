@@ -8,6 +8,7 @@ component {
 
     function preCommand() {
         pagePoolClear();
+        // systemCacheClear();
         wirebox.getInstance('moduleService').reload('commandbox-ssg');
     }
 

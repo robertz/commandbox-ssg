@@ -1,6 +1,6 @@
 component extends="commandbox.system.BaseCommand" {
 
-    property name="JasperService" inject="JasperService@commandbox-ssg";
+    property name="SSGService" inject="SSGService@commandbox-ssg";
 
     /**
      * Calculate the output filename
@@ -38,16 +38,16 @@ component extends="commandbox.system.BaseCommand" {
     }
 
     /**
-     * Generate jasper static site
+     * Generate static site
      */
     function run() {
         // make generateSlug available to the variables scope
-        variables.generateSlug = JasperService.generateSlug;
+        variables.generateSlug = SSGService.generateSlug;
 
 
         var startTime = getTickCount();
         // clear the template cache
-        systemCacheClear();
+
         var rootDir = resolvePath('.');
         rootDir = left(rootDir, len(rootDir) - 1); // remove trailing slash to match directoryList query
 
@@ -56,7 +56,7 @@ component extends="commandbox.system.BaseCommand" {
         // recreate the directory
         directoryCreate(rootDir & '/_site');
         // get the configuration
-        var conf = deserializeJSON(fileRead(rootDir & '/_data/jasperconfig.json', 'utf-8'));
+        var conf = deserializeJSON(fileRead(rootDir & '/ssg-config.json', 'utf-8'));
 
         // passthru directories
         for (var dir in conf.passthru) {
@@ -69,7 +69,7 @@ component extends="commandbox.system.BaseCommand" {
 
         print.yellowLine('Building source directory: ' & rootDir);
 
-        var templateList = JasperService.list(rootDir);
+        var templateList = SSGService.list(rootDir);
         var collections = {'all': [], 'tags': []};
 
         // build initial prc
@@ -106,7 +106,7 @@ component extends="commandbox.system.BaseCommand" {
             prc.append(duplicate(conf));
 
             // Try reading the front matter from the template
-            prc.append(JasperService.getTemplateData(fname = template.directory & '/' & template.name));
+            prc.append(SSGService.getTemplateData(fname = template.directory & '/' & template.name));
 
             prc['outFile'] = getOutfile(prc = prc);
 
@@ -149,27 +149,30 @@ component extends="commandbox.system.BaseCommand" {
             collections[lCase(template.type)].append(template)
         });
 
-        // descending date sort
-        collections.post.sort((e1, e2) => {
-            return dateCompare(e2.publishDate, e1.publishDate);
-        });
-
         // build tags
         collections['tags'] = [];
         collections['byTag'] = {};
 
-        // build the taglist
-        collections.post.each((post) => {
-            for (var tag in post.tags) {
-                if (!collections.tags.findNoCase(tag)) {
-                    collections.tags.append(tag);
-                }
+        if (collections.keyExists('post')) {
+            // descending date sort
+            collections.post.sort((e1, e2) => {
+                return dateCompare(e2.publishDate, e1.publishDate);
+            });
 
-                var slugifiedTag = JasperService.generateSlug(input = tag);
-                if (!collections.byTag.keyExists(slugifiedTag)) collections.byTag[slugifiedTag] = [];
-                collections.byTag[slugifiedTag].append(post);
-            }
-        });
+            // build the taglist
+            collections.post.each((post) => {
+                for (var tag in post.tags) {
+                    if (!collections.tags.findNoCase(tag)) {
+                        collections.tags.append(tag);
+                    }
+
+                    var slugifiedTag = SSGService.generateSlug(input = tag);
+                    if (!collections.byTag.keyExists(slugifiedTag)) collections.byTa
+                    g[slugifiedTag] = [];
+                    collections.byTag[slugifiedTag].append(post);
+                }
+            });
+        }
 
         // process pagination
         collections.all.each((prc) => {
@@ -180,10 +183,7 @@ component extends="commandbox.system.BaseCommand" {
 
                 prc['pagination'][targetKey] = [];
 
-                prc.pagination[targetKey].append(
-                    JasperService.paginate(data = data, pageSize = prc.pagination.size),
-                    true
-                );
+                prc.pagination[targetKey].append(SSGService.paginate(data = data, pageSize = prc.pagination.size), true);
 
                 // prc.pagination[ targetKey ].each( ( el ) => {
                 // 	variables[ targetKey ]= el;
@@ -215,7 +215,7 @@ component extends="commandbox.system.BaseCommand" {
             fname = prc.rootDir & '/_site/' & shortName;
             directoryCreate(prc.rootDir & '/_site/' & computedPath, true, true);
             if (!prc.permalink.find('{{'))
-                fileWrite(fname, JasperService.renderTemplate(prc = prc, collections = collections));
+                fileWrite(fname, SSGService.renderTemplate(prc = prc, collections = collections));
         }); // collections.all.each
 
         print.greenLine('Compiled ' & collections.all.len() & ' template(s) in ' & (getTickCount() - startTime) & 'ms.')

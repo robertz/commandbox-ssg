@@ -1,31 +1,35 @@
 {
-	"name": "commandbox-ssg",
-	"version": "0.0.1",
-	"location": "ForgeboxStorage",
-	"author": "Robert Zehnder <robert@kisdigital.com>",
-	"homepage": "https://github.com/robertz/commandbox-ssg",
-	"repository": {
-		"type": "Git",
-		"URL": "https://github.com/robertz/commandbox-ssg"
-	},
-	"bugs": "https://github.com/robertz/commandbox-ssg/issues",
-	"slug": "commandbox-ssg",
-	"description": "A static site generator implemented in Commandbox",
-	"instructions": "",
-	"type": "commandbox-modules",
-	"dependencies": {
-		"cbyaml": "^1.0.5"
-	},
-	"ignore": [
-		"**/.*",
-		"/test/",
-		"/tests/"
-	],
-	"installPaths": {
-		"cbyaml": "modules/cbyaml/"
-	},
-	"keywords": [
-		"blog",
-		"ssg"
-	]
+    "name":"commandbox-ssg",
+    "version":"0.0.2",
+    "location":"ForgeboxStorage",
+    "author":"Robert Zehnder <robert@kisdigital.com>",
+    "homepage":"https://github.com/robertz/commandbox-ssg",
+    "repository":{
+        "type":"Git",
+        "URL":"https://github.com/robertz/commandbox-ssg"
+    },
+    "scripts":{
+        "onRelease":"publish",
+        "postPublish":"!git push --follow-tags"
+    },
+    "bugs":"https://github.com/robertz/commandbox-ssg/issues",
+    "slug":"commandbox-ssg",
+    "description":"A static site generator implemented in Commandbox",
+    "instructions":"",
+    "type":"commandbox-modules",
+    "dependencies":{
+        "cbyaml":"^1.0.5"
+    },
+    "ignore":[
+        "**/.*",
+        "/test/",
+        "/tests/"
+    ],
+    "installPaths":{
+        "cbyaml":"modules/cbyaml/"
+    },
+    "keywords":[
+        "blog",
+        "ssg"
+    ]
 }

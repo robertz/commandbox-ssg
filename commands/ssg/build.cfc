@@ -1,4 +1,4 @@
-component extends="commandbox.system.BaseCommand" {
+component extends="commandbox.system.BaseCommand" output="false" {
 
 	property name="SSGService" inject="SSGService@commandbox-ssg";
 
@@ -42,11 +42,13 @@ component extends="commandbox.system.BaseCommand" {
 	 * Generate static site
 	 */
 	function run(){
+		var startTime = getTickCount();
+
 		// make generateSlug available to the variables scope
 		variables.generateSlug = SSGService.generateSlug;
 
-		var startTime = getTickCount();
 		// clear the template cache
+		systemCacheClear();
 
 		var rootDir = resolvePath( "." );
 		rootDir     = left( rootDir, len( rootDir ) - 1 ); // remove trailing slash to match directoryList query
@@ -75,13 +77,14 @@ component extends="commandbox.system.BaseCommand" {
 		// build initial prc
 		templateList.each( ( template ) => {
 			var prc = {
-				"rootDir"   : rootDir,
-				"directory" : template.directory,
-				"fileSlug"  : template.name.listFirst( "." ),
-				"inFile"    : template.directory & "/" & template.name,
-				"outFile"   : "",
-				"headers"   : [],
-				"meta"      : {
+				"build_start" : startTime,
+				"rootDir"     : rootDir,
+				"directory"   : template.directory,
+				"fileSlug"    : template.name.listFirst( "." ),
+				"inFile"      : template.directory & "/" & template.name,
+				"outFile"     : "",
+				"headers"     : [],
+				"meta"        : {
 					"title"       : "",
 					"description" : "",
 					"author"      : "",

@@ -71,7 +71,6 @@ component extends="commandbox.system.BaseCommand" output="false" {
 
 		print.yellowLine( "Building source directory: " & rootDir );
 
-
 		var templateList = globber( [
 			resolvePath( "." ) & "**.cfm",
 			resolvePath( "." ) & "**.md"
@@ -82,7 +81,6 @@ component extends="commandbox.system.BaseCommand" output="false" {
 			.asQuery()
 			.matches();
 
-		// var templateList = SSGService.list( rootDir );
 
 		var collections = { "all" : [], "tags" : [] };
 

@@ -44,23 +44,6 @@ component {
 	}
 
 	/**
-	 * Get a list of valid templates in the specified file path, recursively
-	 */
-	function list( required string path ){
-		var templates = directoryList( path, true, "query", "*.md|*.cfm" );
-
-		templates = queryExecute(
-			"
-				SELECT *
-				FROM templates t
-				WHERE lcase(t.directory) NOT LIKE '%_includes%'",
-			[],
-			{ "dbtype" : "query" }
-		);
-		return templates
-	}
-
-	/**
 	 * returns rendered html for a template and view
 	 *
 	 * @prc         request context for the current page

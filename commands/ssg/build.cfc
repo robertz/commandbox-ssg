@@ -71,8 +71,20 @@ component extends="commandbox.system.BaseCommand" output="false" {
 
 		print.yellowLine( "Building source directory: " & rootDir );
 
-		var templateList = SSGService.list( rootDir );
-		var collections  = { "all" : [], "tags" : [] };
+
+		var templateList = globber( [
+			resolvePath( "." ) & "**.cfm",
+			resolvePath( "." ) & "**.md"
+		] ).setExcludePattern( [
+				resolvePath( "." ) & "_includes/",
+				resolvePath( "." ) & ".netlify/"
+			] )
+			.asQuery()
+			.matches();
+
+		// var templateList = SSGService.list( rootDir );
+
+		var collections = { "all" : [], "tags" : [] };
 
 		// build initial prc
 		templateList.each( ( template ) => {

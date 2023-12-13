@@ -1,4 +1,4 @@
-component extends="commandbox.system.BaseCommand" {
+component extends="commandbox.system.BaseCommand" output="false" {
 
 	property name="SSGService" inject="SSGService@commandbox-ssg";
 
@@ -42,11 +42,13 @@ component extends="commandbox.system.BaseCommand" {
 	 * Generate static site
 	 */
 	function run(){
+		var startTime = getTickCount();
+
 		// make generateSlug available to the variables scope
 		variables.generateSlug = SSGService.generateSlug;
 
-		var startTime = getTickCount();
 		// clear the template cache
+		systemCacheClear();
 
 		var rootDir = resolvePath( "." );
 		rootDir     = left( rootDir, len( rootDir ) - 1 ); // remove trailing slash to match directoryList query
@@ -75,13 +77,14 @@ component extends="commandbox.system.BaseCommand" {
 		// build initial prc
 		templateList.each( ( template ) => {
 			var prc = {
-				"rootDir"   : rootDir,
-				"directory" : template.directory,
-				"fileSlug"  : template.name.listFirst( "." ),
-				"inFile"    : template.directory & "/" & template.name,
-				"outFile"   : "",
-				"headers"   : [],
-				"meta"      : {
+				"build_start" : startTime,
+				"rootDir"     : rootDir,
+				"directory"   : template.directory,
+				"fileSlug"    : template.name.listFirst( "." ),
+				"inFile"      : template.directory & "/" & template.name,
+				"outFile"     : "",
+				"headers"     : [],
+				"meta"        : {
 					"title"       : "",
 					"description" : "",
 					"author"      : "",
@@ -229,8 +232,18 @@ component extends="commandbox.system.BaseCommand" {
 				true,
 				true
 			);
-			if ( !prc.permalink.find( "{{" ) )
-				fileWrite( fname, SSGService.renderTemplate( prc = prc, collections = collections ) );
+
+			if ( !prc.permalink.find( "{{" ) ) {
+				var contents = SSGService
+					.renderTemplate( prc = prc, collections = collections )
+					.listToArray( chr( 10 ) );
+
+				var cleaned = [];
+				for ( var c in contents ) {
+					if ( !len( trim( c ) ) == 0 ) cleaned.append( c );
+				}
+				fileWrite( fname, cleaned.toList( chr( 10 ) ) );
+			}
 		} ); // collections.all.each
 
 		print.greenLine( "Compiled " & collections.all.len() & " template(s) in " & ( getTickCount() - startTime ) & "ms." )

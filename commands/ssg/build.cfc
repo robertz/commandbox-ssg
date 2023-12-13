@@ -232,8 +232,18 @@ component extends="commandbox.system.BaseCommand" output="false" {
 				true,
 				true
 			);
-			if ( !prc.permalink.find( "{{" ) )
-				fileWrite( fname, SSGService.renderTemplate( prc = prc, collections = collections ) );
+
+			if ( !prc.permalink.find( "{{" ) ) {
+				var contents = SSGService
+					.renderTemplate( prc = prc, collections = collections )
+					.listToArray( chr( 10 ) );
+
+				var cleaned = [];
+				for ( var c in contents ) {
+					if ( !len( trim( c ) ) == 0 ) cleaned.append( c );
+				}
+				fileWrite( fname, cleaned.toList( chr( 10 ) ) );
+			}
 		} ); // collections.all.each
 
 		print.greenLine( "Compiled " & collections.all.len() & " template(s) in " & ( getTickCount() - startTime ) & "ms." )

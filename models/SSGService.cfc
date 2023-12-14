@@ -48,26 +48,40 @@ component {
 	 *
 	 * @prc         request context for the current page
 	 * @collections application generated data
+	 * @ssg_state   current detected directories and settings
 	 */
-	function renderTemplate( required struct prc, required struct collections ){
+	function renderTemplate(
+		required struct prc,
+		required struct collections,
+		required struct ssg_state
+	){
 		var renderedHtml = "";
 		var computedPath = prc.directory.replace( prc.rootDir, "" );
+
 		// render the view based on prc.type
 		if ( prc.inFile.findNoCase( ".cfm" ) ) {
 			savecontent variable="renderedHtml" {
 				include prc.directory & "/" & prc.fileSlug & ".cfm";
 			}
-		} else {
-			savecontent variable="renderedHtml" {
-				include prc.rootDir & "/_includes/" & prc.type & ".cfm";
+		}
+
+		if ( prc.inFile.findNoCase( ".md" ) ) {
+			if ( ssg_state.has_includes ) {
+				savecontent variable="renderedHtml" {
+					include prc.rootDir & "/_includes/" & prc.type & ".cfm";
+				}
+			} else {
+				renderedHtml = prc.content;
 			}
 		}
+
 		// skip layout if "none" is specified
-		if ( prc.layout != "none" ) {
+		if ( prc.layout != "none" && ssg_state.has_includes ) {
 			savecontent variable="renderedHtml" {
 				include prc.rootDir & "/_includes/layouts/" & prc.layout & ".cfm";
 			}
 		}
+
 		// a little whitespace management
 		return trim( renderedHtml );
 	}

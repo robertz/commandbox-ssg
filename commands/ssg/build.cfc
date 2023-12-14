@@ -50,15 +50,40 @@ component extends="commandbox.system.BaseCommand" output="false" {
 		// clear the template cache
 		systemCacheClear();
 
-		var rootDir = resolvePath( "." );
-		rootDir     = left( rootDir, len( rootDir ) - 1 ); // remove trailing slash to match directoryList query
+		var cwd     = resolvePath( "." );
+		var rootDir = left( cwd, len( cwd ) - 1 ); // remove trailing slash to match directoryList query
+
+		var ssg_state = {
+			"has_includes" : directoryExists( cwd & "_includes" ) ? true : false,
+			"has_data"     : directoryExists( cwd & "_data" ) ? true : false,
+			"has_config"   : fileExists( cwd & "ssg-config.json" ) ? true : false
+		};
 
 		// delete the _site directory if it exists
-		if ( directoryExists( rootDir & "/_site" ) ) directoryDelete( rootDir & "/_site", true );
+		if ( directoryExists( cwd & "_site" ) ) directoryDelete( cwd & "_site", true );
 		// recreate the directory
-		directoryCreate( rootDir & "/_site" );
+		directoryCreate( cwd & "_site" );
+
 		// get the configuration
-		var conf = deserializeJSON( fileRead( rootDir & "/ssg-config.json", "utf-8" ) );
+		var conf = {};
+		if ( ssg_state.has_config ) {
+			conf = deserializeJSON( fileRead( cwd & "ssg-config.json", "utf-8" ) );
+			if ( !conf.keyExists( "ignore" ) ) {
+				conf[ "ignore" ] = [];
+			}
+		} else {
+			conf = {
+				"meta" : {
+					"title"       : "commandbox-ssg",
+					"description" : "",
+					"author"      : "",
+					"url"         : "https://example.com"
+				},
+				"outputDir" : "_site",
+				"passthru"  : [],
+				"ignore"    : []
+			};
+		}
 
 		// passthru directories
 		for ( var dir in conf.passthru ) {
@@ -71,16 +96,18 @@ component extends="commandbox.system.BaseCommand" output="false" {
 
 		print.yellowLine( "Building source directory: " & rootDir );
 
-		var templateList = globber( [
-			resolvePath( "." ) & "**.cfm",
-			resolvePath( "." ) & "**.md"
-		] ).setExcludePattern( [
-				resolvePath( "." ) & "_includes/",
-				resolvePath( "." ) & ".netlify/"
-			] )
+		// ability to ignore directories when generating the build
+		var ignoreDirs = [];
+		if ( conf.keyExists( "ignore" ) ) {
+			for ( var dir in conf.ignore ) {
+				ignoreDirs.append( rootDir & dir );
+			}
+		}
+
+		var templateList = globber( [ cwd & "**.cfm", cwd & "**.md" ] )
+			.setExcludePattern( ignoreDirs )
 			.asQuery()
 			.matches();
-
 
 		var collections = { "all" : [], "tags" : [] };
 
@@ -245,7 +272,11 @@ component extends="commandbox.system.BaseCommand" output="false" {
 
 			if ( !prc.permalink.find( "{{" ) ) {
 				var contents = SSGService
-					.renderTemplate( prc = prc, collections = collections )
+					.renderTemplate(
+						prc         = prc,
+						collections = collections,
+						ssg_state   = ssg_state
+					)
 					.listToArray( chr( 10 ) );
 
 				var cleaned = [];

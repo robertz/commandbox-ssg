@@ -11,11 +11,11 @@ component extends="commandbox.system.BaseCommand" output="false" {
 		var outFile = "";
 		if ( prc.type == "page" ) {
 			outFile = prc.inFile.replace( prc.rootDir, "" ).listFirst( "." );
-			outFile = prc.rootDir & "/_site" & outFile & "." & prc.fileExt
+			outFile = prc.rootDir & "/_site" & outFile & "." & prc.fileExt;
 		} else {
 			outFile   = prc.inFile.replace( prc.rootDir, "" );
 			var temp  = outFile.listToArray( "/" ).reverse();
-			temp[ 1 ] = prc.slug & "." & prc.fileExt;
+			temp[ 1 ] = ( prc.keyExists( "slug" ) ? prc.slug : prc.fileSlug ) & "." & prc.fileExt;
 			outFile   = prc.rootDir & "/_site/" & temp.reverse().toList( "/" );
 		}
 		return outfile;
@@ -56,8 +56,25 @@ component extends="commandbox.system.BaseCommand" output="false" {
 		var ssg_state = {
 			"has_includes" : directoryExists( cwd & "_includes" ) ? true : false,
 			"has_data"     : directoryExists( cwd & "_data" ) ? true : false,
-			"has_config"   : fileExists( cwd & "ssg-config.json" ) ? true : false
+			"has_config"   : fileExists( cwd & "ssg-config.json" ) ? true : false,
+			"layouts"      : [],
+			"views"        : []
 		};
+
+		if ( ssg_state.has_includes ) {
+			// build arrays of valid layouts/views
+			var tmp = globber( cwd & "_includes/layouts/*.cfm" ).asArray().matches();
+			for ( var l in tmp ) {
+				ssg_state.layouts.append( listFirst( l.replaceNoCase( cwd & "_includes/layouts/", "" ), "." ) );
+			}
+			tmp = globber( cwd & "_includes/*.cfm" )
+				.setExcludePattern( "/layouts" )
+				.asArray()
+				.matches();
+			for ( var v in tmp ) {
+				ssg_state.views.append( listFirst( v.replaceNoCase( cwd & "_includes/", "" ), "." ) );
+			}
+		}
 
 		// delete the _site directory if it exists
 		if ( directoryExists( cwd & "_site" ) ) directoryDelete( cwd & "_site", true );
@@ -135,8 +152,9 @@ component extends="commandbox.system.BaseCommand" output="false" {
 				"publishDate"            : "",
 				// other
 				"content"                : "",
-				"type"                   : "page",
+				"type"                   : "",
 				"layout"                 : "main",
+				"view"                   : "",
 				"permalink"              : true,
 				"fileExt"                : "html",
 				"excludeFromCollections" : false
@@ -149,6 +167,13 @@ component extends="commandbox.system.BaseCommand" output="false" {
 			prc.append( SSGService.getTemplateData( fname = template.directory & "/" & template.name ) );
 
 			prc[ "outFile" ] = getOutfile( prc = prc );
+
+			// set the view according to type if view is not populated
+			if ( !prc.view.len() && prc.type.len() ) {
+				prc.view = prc.type;
+			} else {
+				prc.view = "page";
+			}
 
 			if ( !isBoolean( prc.permalink ) ) {
 				prc.outFile = rootDir & prc.permalink

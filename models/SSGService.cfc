@@ -58,17 +58,29 @@ component {
 		var renderedHtml = "";
 		var computedPath = prc.directory.replace( prc.rootDir, "" );
 
-		// render the view based on prc.type
+		// template is CF markup
 		if ( prc.inFile.findNoCase( ".cfm" ) ) {
-			savecontent variable="renderedHtml" {
-				include prc.directory & "/" & prc.fileSlug & ".cfm";
+			if ( ssg_state.has_includes && ssg_state.views.contains( prc.view ) ) {
+				// render the markup inside the specified view
+				savecontent variable="prc.content" {
+					include prc.directory & "/" & prc.fileSlug & ".cfm";
+				}
+				savecontent variable="renderedHtml" {
+					include prc.rootDir & "/_includes/" & prc.view & ".cfm";
+				}
+			} else {
+				// view was not found, just render the template
+				savecontent variable="renderedHtml" {
+					include prc.directory & "/" & prc.fileSlug & ".cfm";
+				}
 			}
 		}
 
+		// template is markdown
 		if ( prc.inFile.findNoCase( ".md" ) ) {
-			if ( ssg_state.has_includes ) {
+			if ( ssg_state.has_includes && ssg_state.views.contains( prc.view ) ) {
 				savecontent variable="renderedHtml" {
-					include prc.rootDir & "/_includes/" & prc.type & ".cfm";
+					include prc.rootDir & "/_includes/" & prc.view & ".cfm";
 				}
 			} else {
 				renderedHtml = prc.content;
@@ -76,7 +88,7 @@ component {
 		}
 
 		// skip layout if "none" is specified
-		if ( prc.layout != "none" && ssg_state.has_includes ) {
+		if ( prc.layout != "none" && ssg_state.has_includes && ssg_state.layouts.contains( prc.layout ) ) {
 			savecontent variable="renderedHtml" {
 				include prc.rootDir & "/_includes/layouts/" & prc.layout & ".cfm";
 			}

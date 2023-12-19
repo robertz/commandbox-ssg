@@ -61,10 +61,11 @@ component {
 		// template is CF markup
 		if ( prc.inFile.findNoCase( ".cfm" ) ) {
 			if ( ssg_state.has_includes && ssg_state.views.contains( prc.view ) ) {
-				// render the markup inside the specified view
+				// render the cfml in the template first
 				savecontent variable="prc.content" {
 					include prc.directory & "/" & prc.fileSlug & ".cfm";
 				}
+				// overlay the view
 				savecontent variable="renderedHtml" {
 					include prc.rootDir & "/_includes/" & prc.view & ".cfm";
 				}

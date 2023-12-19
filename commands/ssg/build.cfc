@@ -5,7 +5,8 @@ component extends="commandbox.system.BaseCommand" output="false" {
 	/**
 	 * Calculate the output filename
 	 *
-	 * @prc request context for the page
+	 * @author Robert Zehnder
+	 * @prc    request context for the page
 	 */
 	function getOutfile( required struct prc ){
 		var outFile = "";
@@ -91,7 +92,7 @@ component extends="commandbox.system.BaseCommand" output="false" {
 		} else {
 			conf = {
 				"meta" : {
-					"title"       : "commandbox-ssg",
+					"title"       : "",
 					"description" : "",
 					"author"      : "",
 					"url"         : "https://example.com"
@@ -168,13 +169,6 @@ component extends="commandbox.system.BaseCommand" output="false" {
 
 			prc[ "outFile" ] = getOutfile( prc = prc );
 
-			// set the view according to type if view is not populated
-			if ( !prc.view.len() && prc.type.len() ) {
-				prc.view = prc.type;
-			} else {
-				prc.view = "page";
-			}
-
 			if ( !isBoolean( prc.permalink ) ) {
 				prc.outFile = rootDir & prc.permalink
 
@@ -186,6 +180,11 @@ component extends="commandbox.system.BaseCommand" output="false" {
 				prc.fileExt   = len( ext ) ? ext : "html";
 			} else {
 				prc.permalink = getPermalink( prc );
+			}
+
+			// set the view according to type if view is not populated
+			if ( !prc.view.len() && prc.type.len() ) {
+				prc.view = prc.type;
 			}
 
 			// handle facebook/twitter meta

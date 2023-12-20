@@ -27,3 +27,7 @@ ssg build
 0.0.6
 - Adding `ssg serve` command that writes out the required `.htaccess` and `server.json` to serve static content if not already present. Also starts a static web server to see your changes.
 - Clean up commands formatting and comments
+
+0.0.7
+- Correcting `ssg init` behavior when scaffolding application. It should work properly on Windows now.
+

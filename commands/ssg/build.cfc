@@ -170,7 +170,7 @@ component extends="commandbox.system.BaseCommand" output="false" {
 			prc[ "outFile" ] = getOutfile( prc = prc );
 
 			if ( !isBoolean( prc.permalink ) ) {
-				prc.outFile = rootDir & prc.permalink
+				prc.outFile = rootDir & prc.permalink;
 
 				var temp = prc.permalink.listToArray( "/" ).reverse();
 				var slug = temp[ 1 ].listFirst( "." );

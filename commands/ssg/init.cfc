@@ -1,6 +1,6 @@
 component extends="commandbox.system.BaseCommand" {
 
-	/*
+	/**
 	 * @author Robert Zehnder
 	 * Initialize the current directory with the ssg-skeleton app
 	 */
@@ -12,36 +12,7 @@ component extends="commandbox.system.BaseCommand" {
 			return error( "Directory is not empty." );
 		}
 
-		command( "coldbox create app" )
-			.params(
-				name     = arguments.name,
-				skeleton = "robertz/ssg-skeleton",
-				verbose  = arguments.verbose
-			)
-			.run();
-
-		var files = directoryList(
-			path     = resolvePath( "ssg-skeleton" ),
-			recurse  = true,
-			listInfo = "query",
-			type     = "file"
-		);
-
-		files.each( ( file ) => {
-			directoryCreate(
-				file.directory.replace( "/ssg-skeleton", "" ),
-				true,
-				true
-			);
-			fileWrite(
-				trim( file.directory.replace( "/ssg-skeleton", "" ) & "/" & file.name ),
-				fileRead( file.directory & "/" & file.name ),
-				"utf-8"
-			);
-			print.greenLine( "Writing " & file.directory.replace( "/ssg-skeleton", "" ) & "/" & file.name );
-		} );
-
-		directoryDelete( resolvePath( "ssg-skeleton" ), true );
+		command( "install commandbox-ssg-skeleton" ).run();
 
 		print.greenLine( "SSG project scaffolded." );
 	}

@@ -115,7 +115,8 @@ component extends="commandbox.system.BaseCommand" output="false" {
 		print.yellowLine( "Building source directory: " & rootDir );
 
 		// ability to ignore directories when generating the build
-		var ignoreDirs = [];
+		var ignoreDirs = ["/_includes"];
+
 		if ( conf.keyExists( "ignore" ) ) {
 			for ( var dir in conf.ignore ) {
 				ignoreDirs.append( rootDir & dir );

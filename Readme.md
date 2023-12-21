@@ -31,3 +31,5 @@ ssg build
 0.0.7
 - Correcting `ssg init` behavior when scaffolding application. It should work properly on Windows now.
 
+0.0.8
+- `/_includes` directory will is automatically excluded

@@ -6,7 +6,7 @@ component extends="commandbox.system.BaseCommand" {
 	 */
 	function run(){
 		watch()
-			.paths( [ "**.cfm", "**.md" ] )
+			.paths( [ "**.cfm", "**.md", "**.css", "**.js" ] )
 			.inDirectory( resolvePath( "." ) )
 			.withDelay( 500 )
 			.onChange( function(){

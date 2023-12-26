@@ -33,3 +33,7 @@ ssg build
 
 0.0.8
 - `/_includes` directory will is automatically excluded
+
+0.0.9
+- CSS ad JS files are now monitored by `ssg watch` command and will trigger a build when a change is detected
+- Use `find` instead of `contains` when checking layout/view arrays to determine if the item exists

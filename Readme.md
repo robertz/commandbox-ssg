@@ -43,4 +43,4 @@ ssg build
 - Simple pagination working now (pageSize of 1).
 - Files are now output based on `prc.outFile` and not by directory structure and fileSlug
 - If a template has the `pagination` flag it will be removed from `collections.all`. Only renedered templates are retained
-- 
+- Code cleanup

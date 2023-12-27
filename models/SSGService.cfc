@@ -30,7 +30,7 @@ component {
 
 		if ( fms == 1 ) {
 			var fme = !isCFM ? lines.findAll( "---" )[ 2 ] : lines.findAll( "--->" )[ 1 ]; // front matter end
-			lines.each( ( line, index ) => {
+			lines.each( function( line, index ){
 				if ( index > 1 && index < fme ) yaml &= lines[ index ] & chr( 10 );
 				if ( index > fme ) body &= lines[ index ] & chr( 10 );
 			} );
@@ -110,11 +110,11 @@ component {
 		var currentChunk = 1;
 
 		if ( pageSize > 1 ) output[ 1 ] = [];
-		data.each( ( item, index ) => {
+		data.each( function( item, index ){
 			if ( pageSize > 1 ) {
 				output[ currentChunk ].append( item );
 			} else {
-				output.append( item );
+				output.append( item, true );
 			}
 			if ( index % pageSize == 0 && index < data.len() && pageSize > 1 ) output[ ++currentChunk ] = [];
 		} );

@@ -60,7 +60,7 @@ component {
 
 		// template is CF markup
 		if ( prc.inFile.findNoCase( ".cfm" ) ) {
-			if ( ssg_state.has_includes && ssg_state.views.contains( prc.view ) ) {
+			if ( ssg_state.has_includes && ssg_state.views.find( prc.view ) ) {
 				// render the cfml in the template first
 				savecontent variable="prc.content" {
 					include prc.directory & "/" & prc.fileSlug & ".cfm";
@@ -79,7 +79,7 @@ component {
 
 		// template is markdown
 		if ( prc.inFile.findNoCase( ".md" ) ) {
-			if ( ssg_state.has_includes && ssg_state.views.contains( prc.view ) ) {
+			if ( ssg_state.has_includes && ssg_state.views.find( prc.view ) ) {
 				savecontent variable="renderedHtml" {
 					include prc.rootDir & "/_includes/" & prc.view & ".cfm";
 				}

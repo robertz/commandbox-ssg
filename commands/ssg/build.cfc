@@ -22,7 +22,6 @@ component extends="commandbox.system.BaseCommand" output="false" {
 		return outfile;
 	}
 
-
 	/**
 	 * Calculate permalink
 	 *
@@ -106,7 +105,7 @@ component extends="commandbox.system.BaseCommand" output="false" {
 		// passthru directories
 		for ( var dir in conf.passthru ) {
 			if ( fileExists( rootDir & dir ) ) {
-				fileCopy( rootDir & dir, rootDir & "/_site" & dir )
+				fileCopy( rootDir & dir, rootDir & "/_site" & dir );
 			} else {
 				directoryCopy( rootDir & dir, rootDir & "/_site" & dir, true );
 			}
@@ -115,7 +114,7 @@ component extends="commandbox.system.BaseCommand" output="false" {
 		print.yellowLine( "Building source directory: " & rootDir );
 
 		// ability to ignore directories when generating the build
-		var ignoreDirs = ["/_includes"];
+		var ignoreDirs = [ "/_includes" ];
 
 		if ( conf.keyExists( "ignore" ) ) {
 			for ( var dir in conf.ignore ) {
@@ -131,9 +130,9 @@ component extends="commandbox.system.BaseCommand" output="false" {
 		var collections = { "all" : [], "tags" : [] };
 
 		// build initial prc
-		templateList.each( ( template ) => {
+		templateList.each( function( template ){
 			var prc = {
-				"build_start" : startTime,
+				"build_start" : getTickCount(),
 				"rootDir"     : rootDir,
 				"directory"   : template.directory,
 				"fileSlug"    : template.name.listFirst( "." ),
@@ -150,7 +149,7 @@ component extends="commandbox.system.BaseCommand" output="false" {
 				"title"                  : "",
 				"description"            : "",
 				"image"                  : "",
-				"published"              : false,
+				"published"              : true,
 				"publishDate"            : "",
 				// other
 				"content"                : "",
@@ -168,87 +167,67 @@ component extends="commandbox.system.BaseCommand" output="false" {
 			// Try reading the front matter from the template
 			prc.append( SSGService.getTemplateData( fname = template.directory & "/" & template.name ) );
 
-			prc[ "outFile" ] = getOutfile( prc = prc );
+			// if the template is `published` process it
+			if ( isBoolean( prc.published ) ) {
+				prc[ "outFile" ] = getOutfile( prc = prc );
 
-			if ( !isBoolean( prc.permalink ) ) {
-				prc.outFile = rootDir & prc.permalink;
+				// process permalinks
+				if ( !isBoolean( prc.permalink ) ) {
+					prc.outFile = rootDir & prc.permalink;
 
-				var temp = prc.permalink.listToArray( "/" ).reverse();
-				var slug = temp[ 1 ].listFirst( "." );
-				var ext  = temp[ 1 ].listRest( "." );
+					var temp = prc.permalink.listToArray( "/" ).reverse();
+					var slug = temp[ 1 ].listFirst( "." );
+					var ext  = temp[ 1 ].listRest( "." );
 
-				prc.permalink = "/" & temp.reverse().toList( "/" );
-				prc.fileExt   = len( ext ) ? ext : "html";
-			} else {
-				prc.permalink = getPermalink( prc );
+					prc.permalink = "/" & temp.reverse().toList( "/" );
+					prc.fileExt   = len( ext ) ? ext : "html";
+				} else {
+					prc.permalink = getPermalink( prc );
+				}
+
+				// set the view according to type if view is not populated
+				if ( !prc.view.len() && prc.type.len() ) {
+					prc.view = prc.type;
+				}
+
+				// handle facebook/twitter meta
+				switch ( prc.type ) {
+					case "post":
+						prc.meta.title = prc.meta.title & " - " & prc.title;
+						// set social tags
+						prc.headers.append( { "property" : "og:title", "content" : "#prc.title#" } );
+						prc.headers.append( {
+							"property" : "og:description",
+							"content"  : "#prc.description#"
+						} );
+						prc.headers.append( { "property" : "og:image", "content" : "#prc.image#" } );
+						prc.headers.append( {
+							"name"    : "twitter:card",
+							"content" : "summary_large_image"
+						} );
+						prc.headers.append( { "name" : "twitter:title", "content" : "#prc.title#" } );
+						prc.headers.append( {
+							"name"    : "twitter:description",
+							"content" : "#prc.description#"
+						} );
+						prc.headers.append( { "name" : "twitter:image", "content" : "#prc.image#" } );
+						break;
+					default:
+						break;
+				};
+
+				// add this template to `collections.all`
+				collections.all.append( prc );
 			}
-
-			// set the view according to type if view is not populated
-			if ( !prc.view.len() && prc.type.len() ) {
-				prc.view = prc.type;
-			}
-
-			// handle facebook/twitter meta
-			switch ( prc.type ) {
-				case "post":
-					prc.meta.title = prc.meta.title & " - " & prc.title;
-					// set social tags
-					prc.headers.append( { "property" : "og:title", "content" : "#prc.title#" } );
-					prc.headers.append( {
-						"property" : "og:description",
-						"content"  : "#prc.description#"
-					} );
-					prc.headers.append( { "property" : "og:image", "content" : "#prc.image#" } );
-					prc.headers.append( {
-						"name"    : "twitter:card",
-						"content" : "summary_large_image"
-					} );
-					prc.headers.append( { "name" : "twitter:title", "content" : "#prc.title#" } );
-					prc.headers.append( {
-						"name"    : "twitter:description",
-						"content" : "#prc.description#"
-					} );
-					prc.headers.append( { "name" : "twitter:image", "content" : "#prc.image#" } );
-					break;
-				default:
-					break;
-			};
-
-			collections.all.append( prc );
 		} ); // templateList each
 
-		// build template list by type
-		collections.all.each( ( template ) => {
-			if ( !collections.keyExists( template.type ) ) collections[ template.type ] = [];
-			collections[ lCase( template.type ) ].append( template )
-		} );
 
-		// build tags
-		collections[ "tags" ]  = [];
-		collections[ "byTag" ] = {};
-
-		if ( collections.keyExists( "post" ) ) {
-			// descending date sort
-			collections.post.sort( ( e1, e2 ) => {
-				return dateCompare( e2.publishDate, e1.publishDate );
-			} );
-
-			// build the taglist
-			collections.post.each( ( post ) => {
-				for ( var tag in post.tags ) {
-					if ( !collections.tags.findNoCase( tag ) ) {
-						collections.tags.append( tag );
-					}
-
-					var slugifiedTag = SSGService.generateSlug( input = tag );
-					if ( !collections.byTag.keyExists( slugifiedTag ) ) collections.byTag[ slugifiedTag ] = [];
-					collections.byTag[ slugifiedTag ].append( post );
-				}
-			} );
-		}
+		/**
+		 * Post-processing templates
+		 */
 
 		// process pagination
-		collections.all.each( ( prc ) => {
+		collections.all.each( function( prc ){
 			if ( prc.keyExists( "pagination" ) ) {
 				var data = prc.pagination.data.findNoCase( "collections." ) == 1 ? structGet( prc.pagination.data ) : structGet( "prc." & prc.pagination.data );
 
@@ -275,8 +254,43 @@ component extends="commandbox.system.BaseCommand" output="false" {
 			}
 		} );
 
+		// build template list by type
+		collections.all.each( function( template ){
+			if ( !collections.keyExists( template.type ) ) collections[ template.type ] = [];
+			collections[ lCase( template.type ) ].append( template );
+		} );
+
+		// build tag list and collections by tag
+		collections[ "tags" ]  = [];
+		collections[ "byTag" ] = {};
+
+		// Special processing where `type` is post
+		if ( collections.keyExists( "post" ) ) {
+			// descending date sort
+			collections.post.sort( function( e1, e2 ){
+				return dateCompare( e2.publishDate, e1.publishDate );
+			} );
+
+			// build the taglist
+			collections.post.each( function( post ){
+				for ( var tag in post.tags ) {
+					if ( !collections.tags.findNoCase( tag ) ) {
+						collections.tags.append( tag );
+					}
+
+					var slugifiedTag = SSGService.generateSlug( input = tag );
+					if ( !collections.byTag.keyExists( slugifiedTag ) ) collections.byTag[ slugifiedTag ] = [];
+					collections.byTag[ slugifiedTag ].append( post );
+				}
+			} );
+		}
+
+
+
+		var generated_templates = 0;
+
 		// write the files
-		collections.all.each( ( prc ) => {
+		collections.all.each( function( prc ){
 			var computedPath = prc.directory.replace( prc.rootDir, "" );
 
 			var fname     = "";
@@ -308,11 +322,16 @@ component extends="commandbox.system.BaseCommand" output="false" {
 				for ( var c in contents ) {
 					if ( !len( trim( c ) ) == 0 ) cleaned.append( c );
 				}
-				fileWrite( fname, cleaned.toList( chr( 10 ) ) );
+
+				if ( prc.published ) {
+					fileWrite( fname, cleaned.toList( chr( 10 ) ) );
+					generated_templates++;
+				}
 			}
 		} ); // collections.all.each
 
-		print.greenLine( "Compiled " & collections.all.len() & " template(s) in " & ( getTickCount() - startTime ) & "ms." )
+		print.greenLine( "Found " & collections.all.len() & " template(s)" );
+		print.greenLine( "Compiled " & generated_templates & " template(s) in " & ( getTickCount() - startTime ) & "ms." );
 	}
 
 }

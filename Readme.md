@@ -37,3 +37,10 @@ ssg build
 0.0.9
 - CSS ad JS files are now monitored by `ssg watch` command and will trigger a build when a change is detected
 - Use `find` instead of `contains` when checking layout/view arrays to determine if the item exists
+
+0.0.10
+- Much of the `build` command has been restructured to get pagination working.
+- Simple pagination working now (pageSize of 1).
+- Files are now output based on `prc.outFile` and not by directory structure and fileSlug
+- If a template has the `pagination` flag it will be removed from `collections.all`. Only renedered templates are retained
+- Code cleanup

@@ -10,14 +10,18 @@ component extends="commandbox.system.BaseCommand" output="false" {
 	 */
 	function getOutfile( required struct prc ){
 		var outFile = "";
-		if ( prc.type == "page" ) {
-			outFile = prc.inFile.replace( prc.rootDir, "" ).listFirst( "." );
-			outFile = prc.rootDir & "/_site" & outFile & "." & prc.fileExt;
-		} else {
+		if ( prc.type == "post" ) {
 			outFile   = prc.inFile.replace( prc.rootDir, "" );
 			var temp  = outFile.listToArray( "/" ).reverse();
 			temp[ 1 ] = ( prc.keyExists( "slug" ) ? prc.slug : prc.fileSlug ) & "." & prc.fileExt;
 			outFile   = prc.rootDir & "/_site/" & temp.reverse().toList( "/" );
+		} else {
+			if ( len( prc.permalink ) ) {
+				outFile = prc.rootDir & "/_site" & prc.permalink;
+			} else {
+				outFile = prc.inFile.replace( prc.rootDir, "" ).listFirst( "." );
+				outFile = prc.rootDir & "/_site" & outFile & "." & prc.fileExt;
+			}
 		}
 		return outfile;
 	}
@@ -75,6 +79,9 @@ component extends="commandbox.system.BaseCommand" output="false" {
 				ssg_state.views.append( listFirst( v.replaceNoCase( cwd & "_includes/", "" ), "." ) );
 			}
 		}
+		// paginated templates that should be removed before render
+		var paginated_templates = [];
+
 
 		// delete the _site directory if it exists
 		if ( directoryExists( cwd & "_site" ) ) directoryDelete( cwd & "_site", true );
@@ -114,7 +121,7 @@ component extends="commandbox.system.BaseCommand" output="false" {
 		print.yellowLine( "Building source directory: " & rootDir );
 
 		// ability to ignore directories when generating the build
-		var ignoreDirs = [ "/_includes" ];
+		var ignoreDirs = [ cwd & "_includes" ];
 
 		if ( conf.keyExists( "ignore" ) ) {
 			for ( var dir in conf.ignore ) {
@@ -156,7 +163,7 @@ component extends="commandbox.system.BaseCommand" output="false" {
 				"type"                   : "",
 				"layout"                 : "main",
 				"view"                   : "",
-				"permalink"              : true,
+				"permalink"              : "",
 				"fileExt"                : "html",
 				"excludeFromCollections" : false
 			};
@@ -168,20 +175,21 @@ component extends="commandbox.system.BaseCommand" output="false" {
 			prc.append( SSGService.getTemplateData( fname = template.directory & "/" & template.name ) );
 
 			// if the template is `published` process it
-			if ( isBoolean( prc.published ) ) {
+			if ( isBoolean( prc.published ) && prc.published ) {
 				prc[ "outFile" ] = getOutfile( prc = prc );
 
 				// process permalinks
-				if ( !isBoolean( prc.permalink ) ) {
-					prc.outFile = rootDir & prc.permalink;
-
-					var temp = prc.permalink.listToArray( "/" ).reverse();
-					var slug = temp[ 1 ].listFirst( "." );
-					var ext  = temp[ 1 ].listRest( "." );
+				if ( len( prc.permalink ) ) {
+					// permalink was specified, break it apart
+					prc.outFile = rootDir & "/_site" & prc.permalink;
+					var temp    = prc.permalink.listToArray( "/" ).reverse();
+					var slug    = temp[ 1 ].listFirst( "." );
+					var ext     = temp[ 1 ].listRest( "." );
 
 					prc.permalink = "/" & temp.reverse().toList( "/" );
 					prc.fileExt   = len( ext ) ? ext : "html";
 				} else {
+					// try to calculate the permalink based on the template
 					prc.permalink = getPermalink( prc );
 				}
 
@@ -226,43 +234,15 @@ component extends="commandbox.system.BaseCommand" output="false" {
 		 * Post-processing templates
 		 */
 
-		// process pagination
-		collections.all.each( function( prc ){
-			if ( prc.keyExists( "pagination" ) ) {
-				var data = prc.pagination.data.findNoCase( "collections." ) == 1 ? structGet( prc.pagination.data ) : structGet( "prc." & prc.pagination.data );
-
-				var targetKey = prc.pagination.keyExists( "alias" ) ? prc.pagination.alias : "pagedData";
-
-				prc[ "pagination" ][ targetKey ] = [];
-
-				prc.pagination[ targetKey ].append(
-					SSGService.paginate( data = data, pageSize = prc.pagination.size ),
-					true
-				);
-
-				// prc.pagination[ targetKey ].each( ( el ) => {
-				// 	variables[ targetKey ]= el;
-				// 	var dupPRC            = duplicate( prc );
-				// 	savecontent variable  ="dupPRC.content" {
-				// 		writeOutput( prc.content );
-				// 	};
-				// 	dupPRC.permalink.replace( "{{" & targetKey & "}}", el );
-				// 	dupPRC.outFile.replace( "{{" & targetKey & "}}", el );
-				// 	collections.all.append( dupPRC );
-				// } );
-				// generate paginated template
-			}
-		} );
-
-		// build template list by type
-		collections.all.each( function( template ){
-			if ( !collections.keyExists( template.type ) ) collections[ template.type ] = [];
-			collections[ lCase( template.type ) ].append( template );
-		} );
-
 		// build tag list and collections by tag
 		collections[ "tags" ]  = [];
 		collections[ "byTag" ] = {};
+
+		// build template list by type
+		collections.all.each( function( template ){
+			if ( !collections.keyExists( template.type ) && template.type.len() ) collections[ template.type ] = [];
+			if ( template.type.len() ) collections[ lCase( template.type ) ].append( template );
+		} );
 
 		// Special processing where `type` is post
 		if ( collections.keyExists( "post" ) ) {
@@ -283,33 +263,47 @@ component extends="commandbox.system.BaseCommand" output="false" {
 					collections.byTag[ slugifiedTag ].append( post );
 				}
 			} );
+
+			collections.tags = collections.tags.sort( "text" );
 		}
 
+		/*
+		 * Pagination handling
+		 */
+		collections.all.each( function( prc, index ){
+			if ( prc.keyExists( "pagination" ) ) {
+				// main paginated templates are removed from `collections.all` and replaced with rendered pages
+				paginated_templates.append( index );
+				var data      = prc.pagination.data;
+				var size      = prc.pagination.keyExists( "size" ) ? prc.pagination.size : 1;
+				var targetKey = prc.pagination.keyExists( "alias" ) ? prc.pagination.alias : "pagedData";
+				var paged     = SSGService.paginate( data = data, pageSize = size );
+				paged.each( function( page, index ){
+					var page_prc          = duplicate( prc );
+					var rendered_content  = "";
+					page_prc[ targetKey ] = page;
+					page_prc.permalink    = page_prc.permalink.replace( "{{" & targetKey & "}}", page );
+					page_prc.outFile      = cwd & prc.outputDir & page_prc.permalink;
+					page_prc.delete( "pagination" );
+					collections.all.append( page_prc );
+				} );
+			}
+		} );
+		/*
+		 * END: Pagination handling
+		 */
 
+		// remove original templates with pagination
+		paginated_templates = paginated_templates.sort( "numeric", "desc" );
+		paginated_templates.each( function( idx ){
+			collections.all.deleteAt( idx );
+		} );
 
 		var generated_templates = 0;
 
 		// write the files
 		collections.all.each( function( prc ){
-			var computedPath = prc.directory.replace( prc.rootDir, "" );
-
-			var fname     = "";
-			var shortName = "";
-
-			if ( lCase( prc.type ) == "post" ) {
-				shortName = computedPath & "/" & prc.slug & "." & prc.fileExt;
-			} else {
-				shortName = computedPath & "/" & prc.fileSlug & "." & prc.fileExt;
-			}
-
-			fname = prc.rootDir & "/_site/" & shortName;
-			directoryCreate(
-				prc.rootDir & "/_site/" & computedPath,
-				true,
-				true
-			);
-
-			if ( !prc.permalink.find( "{{" ) ) {
+			if ( prc.published ) {
 				var contents = SSGService
 					.renderTemplate(
 						prc         = prc,
@@ -323,14 +317,18 @@ component extends="commandbox.system.BaseCommand" output="false" {
 					if ( !len( trim( c ) ) == 0 ) cleaned.append( c );
 				}
 
-				if ( prc.published ) {
-					fileWrite( fname, cleaned.toList( chr( 10 ) ) );
-					generated_templates++;
-				}
+				var file_path = "/" & prc.outFile
+					.listToArray( "/" )
+					.deleteAt( prc.outfile.listToArray( "/" ).len() )
+					.toList( "/" );
+
+				directoryCreate( file_path, true, true );
+
+				fileWrite( prc.outFile, cleaned.toList( chr( 10 ) ) );
+				generated_templates++;
 			}
 		} ); // collections.all.each
 
-		print.greenLine( "Found " & collections.all.len() & " template(s)" );
 		print.greenLine( "Compiled " & generated_templates & " template(s) in " & ( getTickCount() - startTime ) & "ms." );
 	}
 

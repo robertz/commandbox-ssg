@@ -44,3 +44,6 @@ ssg build
 - Files are now output based on `prc.outFile` and not by directory structure and fileSlug
 - If a template has the `pagination` flag it will be removed from `collections.all`. Only renedered templates are retained
 - Code cleanup
+
+0.0.11
+- Attempting to make the build OS agnosstic

@@ -1,3 +1,6 @@
+/**
+ * I generate a static site from the current working directory
+ */
 component extends="commandbox.system.BaseCommand" output="false" {
 
 	property name="SSGService" inject="SSGService@commandbox-ssg";
@@ -5,8 +8,7 @@ component extends="commandbox.system.BaseCommand" output="false" {
 	/**
 	 * Calculate the output filename
 	 *
-	 * @author Robert Zehnder
-	 * @prc    request context for the page
+	 * @prc request context for the page
 	 */
 	function getOutfile( required struct prc ){
 		var outFile = "";
@@ -56,6 +58,9 @@ component extends="commandbox.system.BaseCommand" output="false" {
 
 		var cwd     = resolvePath( "." );
 		var rootDir = left( cwd, len( cwd ) - 1 ); // remove trailing slash to match directoryList query
+
+		var is_unix = cwd.left( 1 ) == "/" ? true : false;
+		if ( !is_unix ) cwd.replace( "\", "/", "all" );
 
 		var ssg_state = {
 			"has_includes" : directoryExists( cwd & "_includes" ) ? true : false,
@@ -317,7 +322,7 @@ component extends="commandbox.system.BaseCommand" output="false" {
 					if ( !len( trim( c ) ) == 0 ) cleaned.append( c );
 				}
 
-				var file_path = "/" & prc.outFile
+				var file_path = ( is_unix ? "/" : "" ) & prc.outFile
 					.listToArray( "/" )
 					.deleteAt( prc.outfile.listToArray( "/" ).len() )
 					.toList( "/" );

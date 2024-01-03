@@ -3,6 +3,7 @@ component {
 	property name="SSGService";
 	property name="YamlService" inject="Parser@cbyaml";
 	property name="processor" inject="processor@commandbox-ssg";
+	property name="fileSystemUtil" inject="Filesystem";
 
 	/**
 	 * Initialize
@@ -79,7 +80,7 @@ component {
 			} else {
 				// view was not found, just render the template
 				savecontent variable="renderedHtml" {
-					include prc.directory & "/" & prc.fileSlug & ".cfm";
+					include fileSystemUtil.normalizeSlashes( prc.directory & "/" & prc.fileSlug & ".cfm" );
 				}
 			}
 		}

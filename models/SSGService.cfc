@@ -64,14 +64,13 @@ component {
 		required struct process
 	){
 		var renderedHtml = "";
-		var computedPath = prc.directory.replace( prc.rootDir, "" );
 
 		// template is CF markup
 		if ( prc.inFile.findNoCase( ".cfm" ) ) {
 			if ( process.has_includes && process.views.find( prc.view ) ) {
 				// render the cfml in the template first
 				savecontent variable="prc.content" {
-					include prc.directory & "/" & prc.fileSlug & ".cfm";
+					include prc.inFile;
 				}
 				// overlay the view
 				savecontent variable="renderedHtml" {
@@ -80,7 +79,7 @@ component {
 			} else {
 				// view was not found, just render the template
 				savecontent variable="renderedHtml" {
-					include fileSystemUtil.normalizeSlashes( prc.directory & "/" & prc.fileSlug & ".cfm" );
+					include prc.inFile;
 				}
 			}
 		}

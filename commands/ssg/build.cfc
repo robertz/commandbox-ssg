@@ -89,6 +89,7 @@ component extends="commandbox.system.BaseCommand" {
 				process.views.append( listFirst( getFileFromPath( v ), "." ) );
 			}
 		}
+
 		// paginated templates that should be removed before render
 		var paginated_templates = [];
 
@@ -183,6 +184,9 @@ component extends="commandbox.system.BaseCommand" {
 
 			// Try reading the front matter from the template
 			prc.append( SSGService.getTemplateData( fname = template.directory & "/" & template.name ) );
+
+			print.line( prc );
+			// return;
 
 			// if the template is `published` process it
 			if ( isBoolean( prc.published ) && prc.published ) {

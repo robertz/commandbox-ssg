@@ -2,8 +2,9 @@
  * Copyright 2013 Ortus Solutions, Corp
  * www.ortussolutions.com
  * ---
- * @author Luis Majano
  * Convert markdown to HTML
+ *
+ * @author Luis Majano
  */
 component accessors="true" singleton {
 
@@ -22,7 +23,7 @@ component accessors="true" singleton {
 	/**
 	 * Constructor
 	 */
-	function init() {
+	function init(){
 		// systemOutput( LIB_PATHS );
 		// store references
 		variables.staticParser = createObject(
@@ -43,9 +44,10 @@ component accessors="true" singleton {
 
 	/**
 	 * Convert markdown to HTML
+	 *
 	 * @txt The markdown text to convert
 	 */
-	function toHTML( required txt ) {
+	function toHTML( required txt ){
 		var document = variables.parser.parse( trim( arguments.txt ) );
 		return trim( variables.renderer.render( document ) );
 	}
@@ -55,9 +57,9 @@ component accessors="true" singleton {
 	 *
 	 * @options A struct of options for the parser.
 	 *
-	 * @return  A parser options object.
+	 * @return A parser options object.
 	 */
-	private function createOptions( required struct options ) {
+	private function createOptions( required struct options ){
 		structAppend( arguments.options, defaultOptions() );
 
 		var staticTableExtension = createObject(
@@ -92,7 +94,7 @@ component accessors="true" singleton {
 	 *
 	 * @return The default parser options struct.
 	 */
-	private struct function defaultOptions() {
+	private struct function defaultOptions(){
 		return {
 			tableOptions : {
 				// Treat consecutive pipes at the end of a column as defining spanning column.

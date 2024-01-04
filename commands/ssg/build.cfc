@@ -185,7 +185,7 @@ component extends="commandbox.system.BaseCommand" {
 			// Try reading the front matter from the template
 			prc.append( SSGService.getTemplateData( fname = template.directory & "/" & template.name ) );
 
-			print.line( prc );
+			// print.line( prc );
 			// return;
 
 			// if the template is `published` process it

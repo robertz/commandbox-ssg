@@ -50,3 +50,7 @@ ssg build
 
 0.0.12
 - Now works on Windows
+
+0.0.13
+- Removing debug code
+

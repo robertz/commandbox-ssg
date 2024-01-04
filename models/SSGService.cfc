@@ -3,6 +3,14 @@ component {
 	property name="SSGService";
 	property name="YamlService" inject="Parser@cbyaml";
 	property name="processor" inject="processor@commandbox-ssg";
+	property name="fs" inject="Filesystem";
+
+	/**
+	 * Initialize
+	 */
+	function init(){
+		return this;
+	}
 
 	/**
 	 *  Reads a template and returns front matter and template data
@@ -48,40 +56,38 @@ component {
 	 *
 	 * @prc         request context for the current page
 	 * @collections application generated data
-	 * @ssg_state   current detected directories and settings
+	 * @process     current detected directories and settings
 	 */
 	function renderTemplate(
 		required struct prc,
 		required struct collections,
-		required struct ssg_state
+		required struct process
 	){
 		var renderedHtml = "";
-		var computedPath = prc.directory.replace( prc.rootDir, "" );
-
 		// template is CF markup
 		if ( prc.inFile.findNoCase( ".cfm" ) ) {
-			if ( ssg_state.has_includes && ssg_state.views.find( prc.view ) ) {
+			if ( process.has_includes && process.views.find( prc.view ) ) {
 				// render the cfml in the template first
 				savecontent variable="prc.content" {
-					include prc.directory & "/" & prc.fileSlug & ".cfm";
+					include fs.makePathRelative( prc.inFile );
 				}
 				// overlay the view
 				savecontent variable="renderedHtml" {
-					include prc.rootDir & "/_includes/" & prc.view & ".cfm";
+					include fs.makePathRelative( prc.rootDir & "/_includes/" & prc.view & ".cfm" );
 				}
 			} else {
 				// view was not found, just render the template
 				savecontent variable="renderedHtml" {
-					include prc.directory & "/" & prc.fileSlug & ".cfm";
+					include fs.makePathRelative( prc.inFile );
 				}
 			}
 		}
 
 		// template is markdown
 		if ( prc.inFile.findNoCase( ".md" ) ) {
-			if ( ssg_state.has_includes && ssg_state.views.find( prc.view ) ) {
+			if ( process.has_includes && process.views.find( prc.view ) ) {
 				savecontent variable="renderedHtml" {
-					include prc.rootDir & "/_includes/" & prc.view & ".cfm";
+					include fs.makePathRelative( prc.rootDir & "/_includes/" & prc.view & ".cfm" );
 				}
 			} else {
 				renderedHtml = prc.content;
@@ -89,9 +95,9 @@ component {
 		}
 
 		// skip layout if "none" is specified
-		if ( prc.layout != "none" && ssg_state.has_includes && ssg_state.layouts.contains( prc.layout ) ) {
+		if ( prc.layout != "none" && process.has_includes && process.layouts.contains( prc.layout ) ) {
 			savecontent variable="renderedHtml" {
-				include prc.rootDir & "/_includes/layouts/" & prc.layout & ".cfm";
+				include fs.makePathRelative( prc.rootDir & "/_includes/layouts/" & prc.layout & ".cfm" );
 			}
 		}
 

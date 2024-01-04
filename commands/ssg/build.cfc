@@ -1,29 +1,38 @@
-component extends="commandbox.system.BaseCommand" output="false" {
+/**
+ * I generate a static site from the current working directory
+ */
+component extends="commandbox.system.BaseCommand" {
 
+	property name="process";
 	property name="SSGService" inject="SSGService@commandbox-ssg";
+	property name="fs" inject="Filesystem";
 
 	/**
 	 * Calculate the output filename
 	 *
-	 * @author Robert Zehnder
-	 * @prc    request context for the page
+	 * @prc request context for the page
 	 */
 	function getOutfile( required struct prc ){
+		var outDir  = "";
 		var outFile = "";
+		var temp    = "";
+
 		if ( prc.type == "post" ) {
 			outFile   = prc.inFile.replace( prc.rootDir, "" );
-			var temp  = outFile.listToArray( "/" ).reverse();
+			temp      = outFile.listToArray( "/" ).reverse();
 			temp[ 1 ] = ( prc.keyExists( "slug" ) ? prc.slug : prc.fileSlug ) & "." & prc.fileExt;
 			outFile   = prc.rootDir & "/_site/" & temp.reverse().toList( "/" );
 		} else {
 			if ( len( prc.permalink ) ) {
 				outFile = prc.rootDir & "/_site" & prc.permalink;
 			} else {
-				outFile = prc.inFile.replace( prc.rootDir, "" ).listFirst( "." );
-				outFile = prc.rootDir & "/_site" & outFile & "." & prc.fileExt;
+				// outFile = prc.inFile.replace( prc.rootDir, "" ).listFirst( "." );
+				outFile = getFileFromPath( prc.inFile.replace( prc.rootDir, "" ) ).listFirst( "." );
+				outDir  = getDirectoryFromPath( prc.inFile ).replace( prc.rootDir, "" );
+				outFile = prc.rootDir & "/_site" & outDir & outFile & "." & prc.fileExt;
 			}
 		}
-		return outfile;
+		return fs.normalizeSlashes( outfile );
 	}
 
 	/**
@@ -53,11 +62,12 @@ component extends="commandbox.system.BaseCommand" output="false" {
 
 		// clear the template cache
 		systemCacheClear();
+		pagePoolClear();
 
-		var cwd     = resolvePath( "." );
+		var cwd     = fs.normalizeSlashes( resolvePath( "." ) );
 		var rootDir = left( cwd, len( cwd ) - 1 ); // remove trailing slash to match directoryList query
 
-		var ssg_state = {
+		variables.process = {
 			"has_includes" : directoryExists( cwd & "_includes" ) ? true : false,
 			"has_data"     : directoryExists( cwd & "_data" ) ? true : false,
 			"has_config"   : fileExists( cwd & "ssg-config.json" ) ? true : false,
@@ -65,20 +75,21 @@ component extends="commandbox.system.BaseCommand" output="false" {
 			"views"        : []
 		};
 
-		if ( ssg_state.has_includes ) {
+		if ( process.has_includes ) {
 			// build arrays of valid layouts/views
 			var tmp = globber( cwd & "_includes/layouts/*.cfm" ).asArray().matches();
 			for ( var l in tmp ) {
-				ssg_state.layouts.append( listFirst( l.replaceNoCase( cwd & "_includes/layouts/", "" ), "." ) );
+				process.layouts.append( listFirst( getFileFromPath( l ), "." ) );
 			}
 			tmp = globber( cwd & "_includes/*.cfm" )
 				.setExcludePattern( "/layouts" )
 				.asArray()
 				.matches();
 			for ( var v in tmp ) {
-				ssg_state.views.append( listFirst( v.replaceNoCase( cwd & "_includes/", "" ), "." ) );
+				process.views.append( listFirst( getFileFromPath( v ), "." ) );
 			}
 		}
+
 		// paginated templates that should be removed before render
 		var paginated_templates = [];
 
@@ -90,7 +101,7 @@ component extends="commandbox.system.BaseCommand" output="false" {
 
 		// get the configuration
 		var conf = {};
-		if ( ssg_state.has_config ) {
+		if ( process.has_config ) {
 			conf = deserializeJSON( fileRead( cwd & "ssg-config.json", "utf-8" ) );
 			if ( !conf.keyExists( "ignore" ) ) {
 				conf[ "ignore" ] = [];
@@ -141,9 +152,9 @@ component extends="commandbox.system.BaseCommand" output="false" {
 			var prc = {
 				"build_start" : getTickCount(),
 				"rootDir"     : rootDir,
-				"directory"   : template.directory,
+				"directory"   : fs.normalizeSlashes( template.directory ),
 				"fileSlug"    : template.name.listFirst( "." ),
-				"inFile"      : template.directory & "/" & template.name,
+				"inFile"      : fs.normalizeSlashes( template.directory & "/" & template.name ),
 				"outFile"     : "",
 				"headers"     : [],
 				"meta"        : {
@@ -174,6 +185,9 @@ component extends="commandbox.system.BaseCommand" output="false" {
 			// Try reading the front matter from the template
 			prc.append( SSGService.getTemplateData( fname = template.directory & "/" & template.name ) );
 
+			print.line( prc );
+			// return;
+
 			// if the template is `published` process it
 			if ( isBoolean( prc.published ) && prc.published ) {
 				prc[ "outFile" ] = getOutfile( prc = prc );
@@ -182,9 +196,10 @@ component extends="commandbox.system.BaseCommand" output="false" {
 				if ( len( prc.permalink ) ) {
 					// permalink was specified, break it apart
 					prc.outFile = rootDir & "/_site" & prc.permalink;
-					var temp    = prc.permalink.listToArray( "/" ).reverse();
-					var slug    = temp[ 1 ].listFirst( "." );
-					var ext     = temp[ 1 ].listRest( "." );
+
+					var temp = prc.permalink.listToArray( "/" ).reverse();
+					var slug = temp[ 1 ].listFirst( "." );
+					var ext  = temp[ 1 ].listRest( "." );
 
 					prc.permalink = "/" & temp.reverse().toList( "/" );
 					prc.fileExt   = len( ext ) ? ext : "html";
@@ -199,30 +214,59 @@ component extends="commandbox.system.BaseCommand" output="false" {
 				}
 
 				// handle facebook/twitter meta
-				switch ( prc.type ) {
-					case "post":
-						prc.meta.title = prc.meta.title & " - " & prc.title;
-						// set social tags
-						prc.headers.append( { "property" : "og:title", "content" : "#prc.title#" } );
+
+				if ( len( prc.title ) ) {
+					prc.meta.title = prc.meta.title & " - " & prc.title;
+					prc.headers.append( { "property" : "og:title", "content" : "#prc.title#" } );
+					prc.headers.append( { "name" : "twitter:title", "content" : "#prc.title#" } );
+					prc.headers.append( {
+						"name"    : "twitter:card",
+						"content" : "summary_large_image"
+					} );
+				} else {
+					prc.headers.append( { "property" : "og:title", "content" : "#prc.meta.title#" } );
+					prc.headers.append( { "name" : "twitter:title", "content" : "#prc.meta.title#" } );
+					prc.headers.append( {
+						"name"    : "twitter:card",
+						"content" : "summary_large_image"
+					} );
+				}
+
+				if ( len( prc.description ) ) {
+					prc.headers.append( {
+						"property" : "og:description",
+						"content"  : "#prc.description#"
+					} );
+					prc.headers.append( {
+						"name"    : "twitter:description",
+						"content" : "#prc.description#"
+					} );
+				} else {
+					prc.headers.append( {
+						"property" : "og:description",
+						"content"  : "#prc.meta.description#"
+					} );
+					prc.headers.append( {
+						"name"    : "twitter:description",
+						"content" : "#prc.meta.description#"
+					} );
+				}
+
+				if ( len( prc.image ) ) {
+					prc.headers.append( { "property" : "og:image", "content" : "#prc.image#" } );
+					prc.headers.append( { "name" : "twitter:image", "content" : "#prc.image#" } );
+				} else {
+					if ( prc.meta.keyExists( "background" ) ) {
 						prc.headers.append( {
-							"property" : "og:description",
-							"content"  : "#prc.description#"
+							"property" : "og:image",
+							"content"  : "#prc.meta.background#"
 						} );
-						prc.headers.append( { "property" : "og:image", "content" : "#prc.image#" } );
 						prc.headers.append( {
-							"name"    : "twitter:card",
-							"content" : "summary_large_image"
+							"name"    : "twitter:image",
+							"content" : "#prc.meta.background#"
 						} );
-						prc.headers.append( { "name" : "twitter:title", "content" : "#prc.title#" } );
-						prc.headers.append( {
-							"name"    : "twitter:description",
-							"content" : "#prc.description#"
-						} );
-						prc.headers.append( { "name" : "twitter:image", "content" : "#prc.image#" } );
-						break;
-					default:
-						break;
-				};
+					}
+				}
 
 				// add this template to `collections.all`
 				collections.all.append( prc );
@@ -308,7 +352,7 @@ component extends="commandbox.system.BaseCommand" output="false" {
 					.renderTemplate(
 						prc         = prc,
 						collections = collections,
-						ssg_state   = ssg_state
+						process     = process
 					)
 					.listToArray( chr( 10 ) );
 
@@ -317,12 +361,11 @@ component extends="commandbox.system.BaseCommand" output="false" {
 					if ( !len( trim( c ) ) == 0 ) cleaned.append( c );
 				}
 
-				var file_path = "/" & prc.outFile
-					.listToArray( "/" )
-					.deleteAt( prc.outfile.listToArray( "/" ).len() )
-					.toList( "/" );
-
-				directoryCreate( file_path, true, true );
+				directoryCreate(
+					getDirectoryFromPath( prc.outFile ),
+					true,
+					true
+				);
 
 				fileWrite( prc.outFile, cleaned.toList( chr( 10 ) ) );
 				generated_templates++;

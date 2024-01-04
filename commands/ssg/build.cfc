@@ -5,7 +5,7 @@ component extends="commandbox.system.BaseCommand" {
 
 	property name="process";
 	property name="SSGService" inject="SSGService@commandbox-ssg";
-	property name="fileSystemUtil" inject="Filesystem";
+	property name="fs" inject="Filesystem";
 
 	/**
 	 * Calculate the output filename
@@ -32,7 +32,7 @@ component extends="commandbox.system.BaseCommand" {
 				outFile = prc.rootDir & "/_site" & outDir & outFile & "." & prc.fileExt;
 			}
 		}
-		return fileSystemUtil.normalizeSlashes( outfile );
+		return fs.normalizeSlashes( outfile );
 	}
 
 	/**
@@ -64,7 +64,7 @@ component extends="commandbox.system.BaseCommand" {
 		systemCacheClear();
 		pagePoolClear();
 
-		var cwd     = resolvePath( "." );
+		var cwd     = fs.normalizeSlashes( resolvePath( "." ) );
 		var rootDir = left( cwd, len( cwd ) - 1 ); // remove trailing slash to match directoryList query
 
 		variables.process = {
@@ -152,9 +152,9 @@ component extends="commandbox.system.BaseCommand" {
 			var prc = {
 				"build_start" : getTickCount(),
 				"rootDir"     : rootDir,
-				"directory"   : fileSystemUtil.normalizeSlashes( template.directory ),
+				"directory"   : fs.normalizeSlashes( template.directory ),
 				"fileSlug"    : template.name.listFirst( "." ),
-				"inFile"      : fileSystemUtil.normalizeSlashes( template.directory & "/" & template.name ),
+				"inFile"      : fs.normalizeSlashes( template.directory & "/" & template.name ),
 				"outFile"     : "",
 				"headers"     : [],
 				"meta"        : {

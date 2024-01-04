@@ -3,7 +3,7 @@ component {
 	property name="SSGService";
 	property name="YamlService" inject="Parser@cbyaml";
 	property name="processor" inject="processor@commandbox-ssg";
-	property name="fileSystemUtil" inject="Filesystem";
+	property name="fs" inject="Filesystem";
 
 	/**
 	 * Initialize
@@ -64,22 +64,21 @@ component {
 		required struct process
 	){
 		var renderedHtml = "";
-
 		// template is CF markup
 		if ( prc.inFile.findNoCase( ".cfm" ) ) {
 			if ( process.has_includes && process.views.find( prc.view ) ) {
 				// render the cfml in the template first
 				savecontent variable="prc.content" {
-					include prc.inFile;
+					include fs.makePathRelative( prc.inFile );
 				}
 				// overlay the view
 				savecontent variable="renderedHtml" {
-					include prc.rootDir & "/_includes/" & prc.view & ".cfm";
+					include fs.makePathRelative( prc.rootDir & "/_includes/" & prc.view & ".cfm" );
 				}
 			} else {
 				// view was not found, just render the template
 				savecontent variable="renderedHtml" {
-					include prc.inFile;
+					include fs.makePathRelative( prc.inFile );
 				}
 			}
 		}
@@ -88,7 +87,7 @@ component {
 		if ( prc.inFile.findNoCase( ".md" ) ) {
 			if ( process.has_includes && process.views.find( prc.view ) ) {
 				savecontent variable="renderedHtml" {
-					include prc.rootDir & "/_includes/" & prc.view & ".cfm";
+					include fs.makePathRelative( prc.rootDir & "/_includes/" & prc.view & ".cfm" );
 				}
 			} else {
 				renderedHtml = prc.content;
@@ -98,7 +97,7 @@ component {
 		// skip layout if "none" is specified
 		if ( prc.layout != "none" && process.has_includes && process.layouts.contains( prc.layout ) ) {
 			savecontent variable="renderedHtml" {
-				include prc.rootDir & "/_includes/layouts/" & prc.layout & ".cfm";
+				include fs.makePathRelative( prc.rootDir & "/_includes/layouts/" & prc.layout & ".cfm" );
 			}
 		}
 

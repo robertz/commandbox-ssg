@@ -46,4 +46,7 @@ ssg build
 - Code cleanup
 
 0.0.11
-- Attempting to make the build OS agnosstic
+- Windows changes
+
+0.0.12
+- Now works on Windows

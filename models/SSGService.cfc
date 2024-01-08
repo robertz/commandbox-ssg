@@ -3,7 +3,7 @@ component {
 	property name="SSGService";
 	property name="YamlService" inject="Parser@cbyaml";
 	property name="processor" inject="processor@commandbox-ssg";
-	property name="fs" inject="Filesystem";
+	property name="fsUtil" inject="Filesystem";
 
 	/**
 	 * Initialize
@@ -14,6 +14,8 @@ component {
 
 	/**
 	 *  Reads a template and returns front matter and template data
+	 *
+	 * @fname the name of the template to read
 	 */
 	function getTemplateData( required string fname ){
 		var payload  = {};
@@ -69,16 +71,16 @@ component {
 			if ( process.has_includes && process.views.find( prc.view ) ) {
 				// render the cfml in the template first
 				savecontent variable="prc.content" {
-					include fs.makePathRelative( prc.inFile );
+					include fsUtil.makePathRelative( prc.inFile );
 				}
 				// overlay the view
 				savecontent variable="renderedHtml" {
-					include fs.makePathRelative( prc.rootDir & "/_includes/" & prc.view & ".cfm" );
+					include fsUtil.makePathRelative( prc.rootDir & "/_includes/" & prc.view & ".cfm" );
 				}
 			} else {
 				// view was not found, just render the template
 				savecontent variable="renderedHtml" {
-					include fs.makePathRelative( prc.inFile );
+					include fsUtil.makePathRelative( prc.inFile );
 				}
 			}
 		}
@@ -87,7 +89,7 @@ component {
 		if ( prc.inFile.findNoCase( ".md" ) ) {
 			if ( process.has_includes && process.views.find( prc.view ) ) {
 				savecontent variable="renderedHtml" {
-					include fs.makePathRelative( prc.rootDir & "/_includes/" & prc.view & ".cfm" );
+					include fsUtil.makePathRelative( prc.rootDir & "/_includes/" & prc.view & ".cfm" );
 				}
 			} else {
 				renderedHtml = prc.content;
@@ -97,7 +99,7 @@ component {
 		// skip layout if "none" is specified
 		if ( prc.layout != "none" && process.has_includes && process.layouts.contains( prc.layout ) ) {
 			savecontent variable="renderedHtml" {
-				include fs.makePathRelative( prc.rootDir & "/_includes/layouts/" & prc.layout & ".cfm" );
+				include fsUtil.makePathRelative( prc.rootDir & "/_includes/layouts/" & prc.layout & ".cfm" );
 			}
 		}
 

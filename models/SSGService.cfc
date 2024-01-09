@@ -70,17 +70,22 @@ component {
 		if ( prc.inFile.findNoCase( ".cfm" ) ) {
 			if ( process.has_includes && process.views.find( prc.view ) && prc.layout != "none" ) {
 				// render the cfml in the template first
+
+				var fn = fsUtil.makePathRelative( prc.inFile );
 				savecontent variable="prc.content" {
-					include fsUtil.makePathRelative( prc.inFile );
+					include fn;
 				}
+
 				// overlay the view
+				fn = fsUtil.makePathRelative( prc.rootDir & "/_includes/" & prc.view & ".cfm" );
 				savecontent variable="renderedHtml" {
-					include fsUtil.makePathRelative( prc.rootDir & "/_includes/" & prc.view & ".cfm" );
+					include fn;
 				}
 			} else {
 				// view was not found, just render the template
+				fn = fsUtil.makePathRelative( prc.inFile );
 				savecontent variable="renderedHtml" {
-					include fsUtil.makePathRelative( prc.inFile );
+					include fn;
 				}
 			}
 		}
@@ -88,8 +93,9 @@ component {
 		// template is markdown
 		if ( prc.inFile.findNoCase( ".md" ) ) {
 			if ( process.has_includes && process.views.find( prc.view ) ) {
+				var fn = fsUtil.makePathRelative( prc.rootDir & "/_includes/" & prc.view & ".cfm" );
 				savecontent variable="renderedHtml" {
-					include fsUtil.makePathRelative( prc.rootDir & "/_includes/" & prc.view & ".cfm" );
+					include fn;
 				}
 			} else {
 				renderedHtml = prc.content;
@@ -98,8 +104,9 @@ component {
 
 		// skip layout if "none" is specified
 		if ( prc.layout != "none" && process.has_includes && process.layouts.contains( prc.layout ) ) {
+			var fn = fsUtil.makePathRelative( prc.rootDir & "/_includes/layouts/" & prc.layout & ".cfm" );
 			savecontent variable="renderedHtml" {
-				include fsUtil.makePathRelative( prc.rootDir & "/_includes/layouts/" & prc.layout & ".cfm" );
+				include fn;
 			}
 		}
 

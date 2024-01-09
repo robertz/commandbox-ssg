@@ -101,9 +101,10 @@ component extends="commandbox.system.BaseCommand" {
 		// paginated templates that should be removed before render
 		var paginated_templates = [];
 
-
 		// delete the _site directory if it exists
-		if ( directoryExists( cwd & "_site" ) ) directoryDelete( cwd & "_site", true );
+		if ( directoryExists( cwd & "_site" ) ) {
+			directoryDelete( cwd & "_site", true );
+		}
 		// recreate the directory
 		directoryCreate( cwd & "_site" );
 
@@ -232,7 +233,7 @@ component extends="commandbox.system.BaseCommand" {
 		collections[ "byTag" ] = {};
 
 		// build template list by type
-		collections.all.each( function( template ){
+		collections.all.each( ( template ) => {
 			if ( !collections.keyExists( template.type ) && template.type.len() ) collections[ template.type ] = [];
 			if ( template.type.len() ) collections[ lCase( template.type ) ].append( template );
 		} );
@@ -245,7 +246,7 @@ component extends="commandbox.system.BaseCommand" {
 			} );
 
 			// build the taglist
-			collections.post.each( function( post ){
+			collections.post.each( ( post ) => {
 				for ( var tag in post.tags ) {
 					if ( !collections.tags.findNoCase( tag ) ) {
 						collections.tags.append( tag );
@@ -263,7 +264,7 @@ component extends="commandbox.system.BaseCommand" {
 		/*
 		 * Pagination handling
 		 */
-		collections.all.each( function( prc, index ){
+		collections.all.each( ( prc, index ) => {
 			if ( prc.keyExists( "pagination" ) ) {
 				// main paginated templates are removed from `collections.all` and replaced with rendered pages
 				paginated_templates.append( index );
@@ -288,7 +289,7 @@ component extends="commandbox.system.BaseCommand" {
 
 		// remove original templates with pagination
 		paginated_templates = paginated_templates.sort( "numeric", "desc" );
-		paginated_templates.each( function( idx ){
+		paginated_templates.each( ( idx ) => {
 			collections.all.deleteAt( idx );
 		} );
 

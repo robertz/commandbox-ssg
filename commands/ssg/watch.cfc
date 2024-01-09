@@ -8,7 +8,13 @@ component extends="commandbox.system.BaseCommand" {
 	 */
 	function run(){
 		watch()
-			.paths( [ "**.cfm", "**.md", "**.css", "**.js" ] )
+			.paths( [
+				"**.cfm",
+				"**.md",
+				"**.css",
+				"**.js",
+				"**.json"
+			] )
 			.inDirectory( resolvePath( "." ) )
 			.withDelay( 500 )
 			.onChange( function(){

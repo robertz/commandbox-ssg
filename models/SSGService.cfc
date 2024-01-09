@@ -68,7 +68,7 @@ component {
 		var renderedHtml = "";
 		// template is CF markup
 		if ( prc.inFile.findNoCase( ".cfm" ) ) {
-			if ( process.has_includes && process.views.find( prc.view ) ) {
+			if ( process.has_includes && process.views.find( prc.view ) && prc.layout != "none" ) {
 				// render the cfml in the template first
 				savecontent variable="prc.content" {
 					include fsUtil.makePathRelative( prc.inFile );

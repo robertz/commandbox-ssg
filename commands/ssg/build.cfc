@@ -66,8 +66,8 @@ component extends="commandbox.system.BaseCommand" {
 
 		var cwd       = fsUtil.normalizeSlashes( resolvePath( "." ) );
 		var rootDir   = left( cwd, len( cwd ) - 1 ); // remove trailing slash to match directoryList query
-		var baseData  = { "layouts" : {}, "views" : {} };
-		var file_stem = "";
+		var baseData  = { "layouts" : {}, "views" : {} }; // cache front matter from templates and views
+		var file_stem = ""; // filename without extension
 
 		variables.process = {
 			"has_includes" : directoryExists( cwd & "_includes" ) ? true : false,

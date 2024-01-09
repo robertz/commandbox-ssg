@@ -1,12 +1,20 @@
+/**
+ * I watch the current working directory for changes and rebuild the static site when detected
+ */
 component extends="commandbox.system.BaseCommand" {
 
 	/*
-	 * @author Robert Zehnder
 	 * Watch for cfml and markdown changes in the current directory, rebuild static files when a change is detected
 	 */
 	function run(){
 		watch()
-			.paths( [ "**.cfm", "**.md", "**.css", "**.js" ] )
+			.paths( [
+				"**.cfm",
+				"**.md",
+				"**.css",
+				"**.js",
+				"**.json"
+			] )
 			.inDirectory( resolvePath( "." ) )
 			.withDelay( 500 )
 			.onChange( function(){

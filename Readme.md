@@ -54,3 +54,6 @@ ssg build
 0.0.13
 - Removing debug code
 
+0.0.14
+- Front matter is now read from layouts and views
+- Removing opengraph and twitter meta data from build

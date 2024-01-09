@@ -66,26 +66,30 @@ component {
 		required struct process
 	){
 		var renderedHtml = "";
+		var template     = "";
+
 		// template is CF markup
 		if ( prc.inFile.findNoCase( ".cfm" ) ) {
 			if ( process.has_includes && process.views.find( prc.view ) && prc.layout != "none" ) {
 				// render the cfml in the template first
+				template = fsUtil.makePathRelative( prc.inFile );
 
-				var fn = fsUtil.makePathRelative( prc.inFile );
 				savecontent variable="prc.content" {
-					include fn;
+					include template;
 				}
 
 				// overlay the view
-				fn = fsUtil.makePathRelative( prc.rootDir & "/_includes/" & prc.view & ".cfm" );
+				template = fsUtil.makePathRelative( prc.rootDir & "/_includes/" & prc.view & ".cfm" );
+
 				savecontent variable="renderedHtml" {
-					include fn;
+					include template;
 				}
 			} else {
 				// view was not found, just render the template
-				fn = fsUtil.makePathRelative( prc.inFile );
+				template = fsUtil.makePathRelative( prc.inFile );
+
 				savecontent variable="renderedHtml" {
-					include fn;
+					include template;
 				}
 			}
 		}
@@ -93,9 +97,10 @@ component {
 		// template is markdown
 		if ( prc.inFile.findNoCase( ".md" ) ) {
 			if ( process.has_includes && process.views.find( prc.view ) ) {
-				var fn = fsUtil.makePathRelative( prc.rootDir & "/_includes/" & prc.view & ".cfm" );
+				template = fsUtil.makePathRelative( prc.rootDir & "/_includes/" & prc.view & ".cfm" );
+
 				savecontent variable="renderedHtml" {
-					include fn;
+					include template;
 				}
 			} else {
 				renderedHtml = prc.content;
@@ -103,10 +108,15 @@ component {
 		}
 
 		// skip layout if "none" is specified
-		if ( prc.layout != "none" && process.has_includes && process.layouts.contains( prc.layout ) ) {
-			var fn = fsUtil.makePathRelative( prc.rootDir & "/_includes/layouts/" & prc.layout & ".cfm" );
+		if (
+			prc.layout != "none" &&
+			process.has_includes &&
+			process.layouts.contains( prc.layout )
+		) {
+			template = fsUtil.makePathRelative( prc.rootDir & "/_includes/layouts/" & prc.layout & ".cfm" );
+
 			savecontent variable="renderedHtml" {
-				include fn;
+				include template;
 			}
 		}
 

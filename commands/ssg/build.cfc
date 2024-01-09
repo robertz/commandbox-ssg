@@ -294,7 +294,7 @@ component extends="commandbox.system.BaseCommand" {
 
 		var generated_templates = 0;
 
-		// write the files in parallel
+		// Everything has been generated, write it out to _site folder
 		collections.all.each( ( prc ) => {
 			if ( prc.published ) {
 				var contents = SSGService.renderTemplate(
@@ -316,12 +316,15 @@ component extends="commandbox.system.BaseCommand" {
 				);
 
 				// fileWrite( prc.outFile, cleaned.toList( chr( 10 ) ) );
+				print.greyline( "Writing file: " & replace( prc.outFile, rootDir, "", "all" ) );
 				fileWrite( prc.outFile, contents );
 				generated_templates++;
 			}
 		} ); // collections.all.each
 
+		print.line();
 		print.greenLine( "Compiled " & generated_templates & " template(s) in " & ( getTickCount() - startTime ) & "ms." );
+		print.line();
 	}
 
 }

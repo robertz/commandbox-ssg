@@ -2,6 +2,13 @@
 
 A static site generator implemented in CommandBox
 
+### Source and documentation
+
+[GitHub](https://github.com/robertz/commandbox-ssg)
+
+[Docs](https://kisdigital.com/projects/commandbox-ssg)
+
+
 ### Installation
 
 ```bash

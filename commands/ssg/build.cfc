@@ -157,14 +157,11 @@ component extends="commandbox.system.BaseCommand" {
 				"fileSlug"               : template.name.listFirst( "." ),
 				"inFile"                 : fsUtil.normalizeSlashes( template.directory & "/" & template.name ),
 				"outFile"                : "",
-				"headers"                : [],
-				// core properties
 				"title"                  : "",
 				"description"            : "",
 				"image"                  : "",
 				"published"              : true,
 				"publishDate"            : "",
-				// other
 				"content"                : "",
 				"type"                   : "page",
 				"layout"                 : "main",
@@ -281,21 +278,31 @@ component extends="commandbox.system.BaseCommand" {
 				var size      = prc.pagination.keyExists( "size" ) ? prc.pagination.size : 1;
 				var targetKey = prc.pagination.keyExists( "alias" ) ? prc.pagination.alias : "pagedData";
 
-				// data is a string, try to retrieve from variables scope
+				// data is a string, try to retrieve from variables
 				if ( isSimpleValue( data ) ) {
-					data = structGet( data );
+					data = structGet( prc.pagination.data );
+
+					// if data is a structure, return the struct key list as an array
 					if ( isStruct( data ) ) {
 						// if data is a struct, return the struct keys for iteration
-						data = structKeyList( data ).listToArray();
+						data = structKeyList( data ).listSort( "textnocase", "asc" ).listToArray();
 					}
 				}
+
 				var paged = SSGService.paginate( data = data, pageSize = size );
 				paged.each( ( page, index ) => {
-					var page_prc          = duplicate( prc );
-					var rendered_content  = "";
+					var page_prc         = duplicate( prc );
+					var rendered_content = "";
+
 					page_prc[ targetKey ] = page;
-					page_prc.permalink    = page_prc.permalink.replace( "{{" & targetKey & "}}", page );
-					page_prc.outFile      = cwd & prc.outputDir & page_prc.permalink;
+
+					page_prc.permalink = page_prc.permalink.replace( "{{" & targetKey & "}}", page );
+					page_prc.outFile   = cwd & prc.outputDir & page_prc.permalink;
+
+
+					if ( isSimpleValue( prc.pagination.data ) && isStruct( structGet( prc.pagination.data ) ) ) {
+						page_prc.append( structGet( prc.pagination.data )[ page ] );
+					}
 
 					page_prc.permalink = getPermalink( page_prc );
 					collections.all.append( page_prc );
@@ -303,23 +310,16 @@ component extends="commandbox.system.BaseCommand" {
 					// tag and template type processing
 					if ( page_prc.keyExists( "tags" ) && page_prc.tags.len() ) {
 						for ( var tag in page_prc.tags ) {
-							if ( !collections.tags.findNoCase( tag ) ) {
-								collections.tags.append( tag );
-							}
+							if ( !collections.tags.findNoCase( tag ) ) collections.tags.append( tag );
 							var slugifiedTag = SSGService.generateSlug( tag );
-							if ( !collections.byTag.keyExists( slugifiedTag ) ) {
-								collections.byTag[ slugifiedTag ] = [];
-							}
+							if ( !collections.byTag.keyExists( slugifiedTag ) ) collections.byTag[ slugifiedTag ] = [];
 							collections.byTag[ slugifiedTag ].append( page_prc );
 						}
 					}
 					// add page to types
-					if ( !collections.keyExists( page_prc.type ) && page_prc.type.len() ) {
+					if ( !collections.keyExists( page_prc.type ) && page_prc.type.len() )
 						collections[ page_prc.type ] = [];
-					}
-					if ( page_prc.type.len() ) {
-						collections[ lCase( page_prc.type ) ].append( page_prc );
-					}
+					if ( page_prc.type.len() ) collections[ lCase( page_prc.type ) ].append( page_prc );
 				} );
 			}
 		} );

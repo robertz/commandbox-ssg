@@ -61,7 +61,7 @@ component extends="commandbox.system.BaseCommand" {
 		variables.generateSlug = SSGService.generateSlug;
 
 		// clear the template cache
-		systemCacheClear();
+		// systemCacheClear();
 		pagePoolClear();
 
 		var cwd       = fsUtil.normalizeSlashes( resolvePath( "." ) );
@@ -146,7 +146,7 @@ component extends="commandbox.system.BaseCommand" {
 			.asQuery()
 			.matches();
 
-		var collections = { "all" : [], "tags" : [] };
+		var collections = { "all" : [], "tags" : [], "byTag" : {}, "global" : {} };
 
 		// build initial prc
 		templateList.each( function( template ){
@@ -157,14 +157,11 @@ component extends="commandbox.system.BaseCommand" {
 				"fileSlug"               : template.name.listFirst( "." ),
 				"inFile"                 : fsUtil.normalizeSlashes( template.directory & "/" & template.name ),
 				"outFile"                : "",
-				"headers"                : [],
-				// core properties
 				"title"                  : "",
 				"description"            : "",
 				"image"                  : "",
 				"published"              : true,
 				"publishDate"            : "",
-				// other
 				"content"                : "",
 				"type"                   : "page",
 				"layout"                 : "main",
@@ -228,14 +225,23 @@ component extends="commandbox.system.BaseCommand" {
 		 * Post-processing templates
 		 */
 
-		// build tag list and collections by tag
-		collections[ "tags" ]  = [];
-		collections[ "byTag" ] = {};
+		if ( process.has_data ) {
+			// load json data into `data` node
+			globber( [ cwd & "_data/*.json" ] ).apply( ( dataFile ) => {
+				var fileStem                   = getFileFromPath( dataFile ).listFirst( "." );
+				collections.global[ fileStem ] = deserializeJSON( fileRead( dataFile, "utf-8" ) );
+			} );
+		}
 
 		// build template list by type
 		collections.all.each( ( template ) => {
-			if ( !collections.keyExists( template.type ) && template.type.len() ) collections[ template.type ] = [];
-			if ( template.type.len() ) collections[ lCase( template.type ) ].append( template );
+			if ( !collections.keyExists( template.type ) && template.type.len() ) {
+				collections[ template.type ] = [];
+			}
+			// do not track the main page if it is paginated data
+			if ( template.type.len() && !template.keyExists( "pagination" ) ) {
+				collections[ lCase( template.type ) ].append( template );
+			}
 		} );
 
 		// Special processing where `type` is post
@@ -271,15 +277,49 @@ component extends="commandbox.system.BaseCommand" {
 				var data      = prc.pagination.data;
 				var size      = prc.pagination.keyExists( "size" ) ? prc.pagination.size : 1;
 				var targetKey = prc.pagination.keyExists( "alias" ) ? prc.pagination.alias : "pagedData";
-				var paged     = SSGService.paginate( data = data, pageSize = size );
+
+				// data is a string, try to retrieve from variables
+				if ( isSimpleValue( data ) ) {
+					data = structGet( prc.pagination.data );
+
+					// if data is a structure, return the struct key list as an array
+					if ( isStruct( data ) ) {
+						// if data is a struct, return the struct keys for iteration
+						data = structKeyList( data ).listSort( "textnocase", "asc" ).listToArray();
+					}
+				}
+
+				var paged = SSGService.paginate( data = data, pageSize = size );
 				paged.each( ( page, index ) => {
-					var page_prc          = duplicate( prc );
-					var rendered_content  = "";
+					var page_prc         = duplicate( prc );
+					var rendered_content = "";
+
 					page_prc[ targetKey ] = page;
-					page_prc.permalink    = page_prc.permalink.replace( "{{" & targetKey & "}}", page );
-					page_prc.outFile      = cwd & prc.outputDir & page_prc.permalink;
-					page_prc.delete( "pagination" );
+
+					page_prc.permalink = page_prc.permalink.replace( "{{" & targetKey & "}}", page );
+					page_prc.outFile   = cwd & prc.outputDir & page_prc.permalink;
+
+
+					if ( isSimpleValue( prc.pagination.data ) && isStruct( structGet( prc.pagination.data ) ) ) {
+						page_prc.append( structGet( prc.pagination.data )[ page ] );
+					}
+
+					page_prc.permalink = getPermalink( page_prc );
 					collections.all.append( page_prc );
+
+					// tag and template type processing
+					if ( page_prc.keyExists( "tags" ) && page_prc.tags.len() ) {
+						for ( var tag in page_prc.tags ) {
+							if ( !collections.tags.findNoCase( tag ) ) collections.tags.append( tag );
+							var slugifiedTag = SSGService.generateSlug( tag );
+							if ( !collections.byTag.keyExists( slugifiedTag ) ) collections.byTag[ slugifiedTag ] = [];
+							collections.byTag[ slugifiedTag ].append( page_prc );
+						}
+					}
+					// add page to types
+					if ( !collections.keyExists( page_prc.type ) && page_prc.type.len() )
+						collections[ page_prc.type ] = [];
+					if ( page_prc.type.len() ) collections[ lCase( page_prc.type ) ].append( page_prc );
 				} );
 			}
 		} );
@@ -303,28 +343,20 @@ component extends="commandbox.system.BaseCommand" {
 					collections = collections,
 					process     = process
 				);
-				// .listToArray( chr( 10 ) );
-
-				// var cleaned = [];
-				// for ( var c in contents ) {
-				// 	if ( !len( trim( c ) ) == 0 ) cleaned.append( c );
-				// }
-
 				directoryCreate(
 					getDirectoryFromPath( prc.outFile ),
 					true,
 					true
 				);
-
-				// fileWrite( prc.outFile, cleaned.toList( chr( 10 ) ) );
 				print.greyline( "Writing file: " & replace( prc.outFile, rootDir, "", "all" ) );
+
 				fileWrite( prc.outFile, contents );
 				generated_templates++;
 			}
 		} ); // collections.all.each
 
 		print.line();
-		print.greenLine( "Compiled " & generated_templates & " template(s) in " & ( getTickCount() - startTime ) & "ms." );
+		print.greenLine( "Compiled " & generated_templates & " template(s) in " & ( ( getTickCount() - startTime ) / 1000 ) & " seconds" );
 		print.line();
 	}
 

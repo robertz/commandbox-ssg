@@ -70,3 +70,7 @@ ssg build
 
 0.0.16
 - Additional cleanup
+
+0.0.17
+- Implement data import
+- Pagination changes

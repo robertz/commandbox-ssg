@@ -74,3 +74,10 @@ ssg build
 0.0.17
 - Implement data import
 - Pagination changes
+
+0.1.0
+- Build command has been completely rewritten
+- Directory handling has been normalized so paths are treated the same throughout
+- Working through routines to enhances error handling and messaging
+- Global data `_data/**.json` files can now be nested
+- New arguemnt `--showconfig` will now output details about the process and the ssg-config

@@ -269,20 +269,27 @@ component extends="commandbox.system.BaseCommand" {
 	}
 
 	/**
-	 * Load `_data/*.json` files to `collections.global` if any exist
+	 * Load `_data/**.json` files to `collections.global` if any exist
 	 */
 	function getGlobalData(){
 		// load json data into `data` node
-		globber( [ cwd & "_data/*.json" ] ).apply( ( dataFile ) => {
+		globber( [ cwd & "_data/**.json" ] ).apply( ( dataFile ) => {
 			var fileStem  = getFileFromPath( dataFile ).listFirst( "." );
 			var pathParts = fileSystemUtil
-				.normalizeSlashes( dataFile )
-				.replace( cwd, "" )
+				.normalizeSlashes( getDirectoryFromPath( dataFile ) )
+				.replace( cwd & "_data", "" )
 				.listToArray( "/" );
 
-			print.yellowLine( pathParts );
+			var obj = collections.global;
+			// stub out the path tree
+			for ( var p in pathParts ) {
+				if ( !obj.keyExists( p ) ) {
+					obj[ p ] = {};
+				}
+				obj = obj[ p ];
+			}
 
-			collections.global[ fileStem ] = deserializeJSON( fileRead( dataFile, "utf-8" ) );
+			obj[ fileStem ] = deserializeJSON( fileRead( dataFile, "utf-8" ) );
 		} );
 	}
 

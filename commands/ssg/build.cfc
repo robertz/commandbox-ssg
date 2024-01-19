@@ -333,11 +333,7 @@ component extends="commandbox.system.BaseCommand" {
 	function generateStatic(){
 		collections.all.each( ( prc ) => {
 			if ( prc.published ) {
-				var contents = renderTemplate(
-					prc         = prc,
-					collections = collections,
-					process     = process
-				);
+				var contents = renderTemplate( prc );
 				directoryCreate(
 					getDirectoryFromPath( prc.outFile ),
 					true,
@@ -485,65 +481,64 @@ component extends="commandbox.system.BaseCommand" {
 	 * @collections application generated data
 	 * @process     current detected directories and settings
 	 */
-	function renderTemplate(
-		required struct prc,
-		required struct collections,
-		required struct process
-	){
+	function renderTemplate( prc ){
 		var renderedHtml = "";
 		var template     = "";
-		var cwd          = fileSystemUtil.normalizeSlashes( fileSystemUtil.resolvePath( "." ) );
 
-		// template is CF markup
-		if ( prc.inFile.findNoCase( ".cfm" ) ) {
-			if ( process.hasIncludes && process.views.find( prc.view ) && prc.layout != "none" ) {
-				// render the cfml in the template first
-				template = fileSystemUtil.makePathRelative( prc.inFile );
+		try {
+			// template is CF markup
+			if ( prc.inFile.findNoCase( ".cfm" ) ) {
+				if ( process.hasIncludes && process.views.find( prc.view ) && prc.layout != "none" ) {
+					// render the cfml in the template first
+					template = fileSystemUtil.makePathRelative( prc.inFile );
 
-				savecontent variable="prc.content" {
-					include template;
+					savecontent variable="prc.content" {
+						include template;
+					}
+
+					// overlay the view
+					template = fileSystemUtil.makePathRelative( cwd & "_includes/" & prc.view & ".cfm" );
+
+					savecontent variable="renderedHtml" {
+						include template;
+					}
+				} else {
+					// view was not found, just render the template
+					template = fileSystemUtil.makePathRelative( prc.inFile );
+
+					savecontent variable="renderedHtml" {
+						include template;
+					}
 				}
+			}
 
-				// overlay the view
-				template = fileSystemUtil.makePathRelative( cwd & "_includes/" & prc.view & ".cfm" );
+			// template is markdown
+			if ( prc.inFile.findNoCase( ".md" ) ) {
+				if ( process.hasIncludes && process.views.find( prc.view ) ) {
+					template = fileSystemUtil.makePathRelative( cwd & "_includes/" & prc.view & ".cfm" );
 
-				savecontent variable="renderedHtml" {
-					include template;
+					savecontent variable="renderedHtml" {
+						include template;
+					}
+				} else {
+					renderedHtml = prc.content;
 				}
-			} else {
-				// view was not found, just render the template
-				template = fileSystemUtil.makePathRelative( prc.inFile );
+			}
+
+			// skip layout if "none" is specified
+			if (
+				prc.layout != "none" &&
+				process.hasIncludes &&
+				process.layouts.find( prc.layout )
+			) {
+				template = fileSystemUtil.makePathRelative( cwd & "_includes/layouts/" & prc.layout & ".cfm" );
 
 				savecontent variable="renderedHtml" {
 					include template;
 				}
 			}
-		}
-
-		// template is markdown
-		if ( prc.inFile.findNoCase( ".md" ) ) {
-			if ( process.hasIncludes && process.views.find( prc.view ) ) {
-				template = fileSystemUtil.makePathRelative( cwd & "_includes/" & prc.view & ".cfm" );
-
-				savecontent variable="renderedHtml" {
-					include template;
-				}
-			} else {
-				renderedHtml = prc.content;
-			}
-		}
-
-		// skip layout if "none" is specified
-		if (
-			prc.layout != "none" &&
-			process.hasIncludes &&
-			process.layouts.contains( prc.layout )
-		) {
-			template = fileSystemUtil.makePathRelative( cwd & "_includes/layouts/" & prc.layout & ".cfm" );
-
-			savecontent variable="renderedHtml" {
-				include template;
-			}
+		} catch ( any e ) {
+			error( prc.inFile & " :: " & e.message );
 		}
 
 		// a little whitespace management

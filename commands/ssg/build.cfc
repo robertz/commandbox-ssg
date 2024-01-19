@@ -71,7 +71,6 @@ component extends="commandbox.system.BaseCommand" {
 		print.line();
 	}
 
-
 	/**
 	 * Detect directory structure and setup defaul values
 	 *

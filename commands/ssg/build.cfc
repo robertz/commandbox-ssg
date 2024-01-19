@@ -477,9 +477,7 @@ component extends="commandbox.system.BaseCommand" {
 	/**
 	 * returns rendered html for a template and view
 	 *
-	 * @prc         request context for the current page
-	 * @collections application generated data
-	 * @process     current detected directories and settings
+	 * @prc request context for the current page
 	 */
 	function renderTemplate( prc ){
 		var renderedHtml = "";
@@ -511,7 +509,6 @@ component extends="commandbox.system.BaseCommand" {
 					}
 				}
 			}
-
 			// template is markdown
 			if ( prc.inFile.findNoCase( ".md" ) ) {
 				if ( process.hasIncludes && process.views.find( prc.view ) ) {
@@ -524,7 +521,6 @@ component extends="commandbox.system.BaseCommand" {
 					renderedHtml = prc.content;
 				}
 			}
-
 			// skip layout if "none" is specified
 			if (
 				prc.layout != "none" &&
@@ -540,7 +536,6 @@ component extends="commandbox.system.BaseCommand" {
 		} catch ( any e ) {
 			error( prc.inFile & " :: " & e.message );
 		}
-
 		// a little whitespace management
 		return trim( renderedHtml );
 	}

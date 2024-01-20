@@ -31,6 +31,7 @@ component extends="commandbox.system.BaseCommand" {
 		if ( process.hasConfig ) getSSGConfig();
 		if ( process.hasIncludes ) getIncludes();
 		if ( process.hasData ) getGlobalData();
+		if ( process.applicationHelper ) getApplicationHelper();
 
 		if ( arguments.keyExists( "showconfig" ) ) {
 			print.line();
@@ -77,11 +78,12 @@ component extends="commandbox.system.BaseCommand" {
 	 * @process the configuration object
 	 */
 	function getProcessConfig(){
-		process[ "hasIncludes" ] = directoryExists( cwd & "_includes" ) ? true : false;
-		process[ "hasData" ]     = directoryExists( cwd & "_data" ) ? true : false;
-		process[ "hasConfig" ]   = fileExists( cwd & "ssg-config.json" ) ? true : false;
-		process[ "layouts" ]     = [];
-		process[ "views" ]       = [];
+		process[ "applicationHelper" ] = fileExists( cwd & "_includes/applicationHelper.cfm" );
+		process[ "hasIncludes" ]       = directoryExists( cwd & "_includes" ) ? true : false;
+		process[ "hasData" ]           = directoryExists( cwd & "_data" ) ? true : false;
+		process[ "hasConfig" ]         = fileExists( cwd & "ssg-config.json" ) ? true : false;
+		process[ "layouts" ]           = [];
+		process[ "views" ]             = [];
 	}
 
 	/**
@@ -108,7 +110,7 @@ component extends="commandbox.system.BaseCommand" {
 			baseData[ "layouts" ][ fileStem ].delete( "content" );
 		}
 		tmp = globber( cwd & "_includes/*.cfm" )
-			.setExcludePattern( "/layouts" )
+			.setExcludePattern( [ "/layouts", "applicationHelper.cfm" ] )
 			.asArray()
 			.matches();
 		for ( var view in tmp ) {
@@ -132,16 +134,25 @@ component extends="commandbox.system.BaseCommand" {
 				.listToArray( "/" );
 
 			var obj = collections.global;
-			// stub out the path tree
+			// walk the path tree
 			for ( var p in pathParts ) {
-				if ( !obj.keyExists( p ) ) {
-					obj[ p ] = {};
-				}
+				if ( !obj.keyExists( p ) ) obj[ p ] = {};
 				obj = obj[ p ];
 			}
 
 			obj[ fileStem ] = deserializeJSON( fileRead( dataFile, "utf-8" ) );
 		} );
+	}
+
+	/**
+	 * Get applicationHelper.cfm if it exists
+	 */
+	function getApplicationHelper(){
+		try {
+			include cwd & "_includes/applicationHelper.cfm";
+		} catch ( any e ) {
+			error( "Error loading applicationHelper.cfm :: " & e.message );
+		}
 	}
 
 	/**

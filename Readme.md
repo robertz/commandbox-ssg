@@ -28,7 +28,7 @@ ssg build
 
 0.1.1
 
-- Adding applicationHelper.cfm support to be able to execute code on build
+- Adding applicationHelper.cfm support to be able to execute code on build and make user defined functions available when rendering pages
 
 0.1.0
 

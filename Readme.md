@@ -26,6 +26,12 @@ ssg build
 
 ### Changelog
 
+0.1.2
+- applicationHelper.cfm include path should be relative for Windows
+- `onBuildReady()` event will fire once configuration has been loaded if it exists in `applicationHeler.cfm`
+- `beforeProcessCollections()` event will fire once template data has been loaded but before `processCollectionsData()` is executed
+- `beforeGenerate()` event will fire after collections and pagination has been processed and before static generation
+
 0.1.1
 
 - Adding applicationHelper.cfm support to be able to execute code on build and make user defined functions available when rendering pages

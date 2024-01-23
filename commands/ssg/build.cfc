@@ -33,6 +33,16 @@ component extends="commandbox.system.BaseCommand" {
 		if ( process.hasData ) getGlobalData();
 		if ( process.applicationHelper ) getApplicationHelper();
 
+		process[ "verbose" ] = arguments.keyExists( "verbose" ) ? true : false;
+
+		if ( variables.keyExists( "onBuildReady" ) ) {
+			try {
+				variables[ "onBuildReady" ]( );
+			} catch ( any e ) {
+				error( "onBuildReady :: " & e.message )
+			}
+		}
+
 		if ( arguments.keyExists( "showconfig" ) ) {
 			print.line();
 			print.limeline( "Process" );
@@ -63,8 +73,25 @@ component extends="commandbox.system.BaseCommand" {
 			processTemplate( template );
 		} );
 
+		if ( variables.keyExists( "beforeProcessCollections" ) ) {
+			try {
+				variables[ "beforeProcessCollections" ]( );
+			} catch ( any e ) {
+				error( "beforeProcessCollections :: " & e.message )
+			}
+		}
+
 		processCollectionsData();
 		processPagination();
+
+		if ( variables.keyExists( "beforeGenerate" ) ) {
+			try {
+				variables[ "beforeGenerate" ]( );
+			} catch ( any e ) {
+				error( "beforeGenerate :: " & e.message )
+			}
+		}
+
 		generateStatic();
 
 		print.line();
@@ -149,7 +176,7 @@ component extends="commandbox.system.BaseCommand" {
 	 */
 	function getApplicationHelper(){
 		try {
-			include cwd & "_includes/applicationHelper.cfm";
+			include fileSystemUtil.makePathRelative( cwd & "_includes/applicationHelper.cfm" );
 		} catch ( any e ) {
 			error( "Error loading applicationHelper.cfm :: " & e.message );
 		}
@@ -349,7 +376,16 @@ component extends="commandbox.system.BaseCommand" {
 					true,
 					true
 				);
-				print.greyline( "Writing file: /" & replace( prc.outFile, cwd, "", "all" ) );
+
+				if ( process.verbose ) {
+					print.greyline(
+						" [ " & prc.inFile & " ] -> " &
+						"/" & replace( prc.outFile, cwd, "", "all" )
+					);
+				} else {
+					print.greyline( "Writing file: /" & replace( prc.outFile, cwd, "", "all" ) );
+				}
+
 				fileWrite( prc.outFile, contents );
 			}
 		} );

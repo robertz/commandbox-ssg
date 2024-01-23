@@ -176,7 +176,7 @@ component extends="commandbox.system.BaseCommand" {
 	 */
 	function getApplicationHelper(){
 		try {
-			include cwd & "_includes/applicationHelper.cfm";
+			include fileSystemUtil.makePathRelative( cwd & "_includes/applicationHelper.cfm" );
 		} catch ( any e ) {
 			error( "Error loading applicationHelper.cfm :: " & e.message );
 		}
@@ -378,12 +378,10 @@ component extends="commandbox.system.BaseCommand" {
 				);
 
 				if ( process.verbose ) {
-					print.greyline( "Writing file: /" & replace( prc.outFile, cwd, "", "all" ) & " from file " & replace(
-						prc.inFile,
-						cwd,
-						"",
-						"all"
-					) );
+					print.greyline(
+						" [ " & prc.inFile & " ] -> " &
+						"/" & replace( prc.outFile, cwd, "", "all" )
+					);
 				} else {
 					print.greyline( "Writing file: /" & replace( prc.outFile, cwd, "", "all" ) );
 				}

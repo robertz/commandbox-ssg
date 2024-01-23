@@ -29,8 +29,8 @@ ssg build
 0.1.2
 - applicationHelper.cfm include path should be relative for Windows
 - `onBuildReady()` event will fire once configuration has been loaded if it exists in `applicationHeler.cfm`
-- `beforeProcessCollections()` event will fire once template data has been loaded but before `processCollectionsData()` is executed
-- `beforeGenerate()` event will fire after collections and pagination has been processed and before static generation
+- `beforeProcessCollections()` event will fire once template data has been loaded but before `processCollectionsData()` is executed if it exists in `applicationHeler.cfm`
+- `beforeGenerate()` event will fire after collections and pagination has been processed and before static generation if it exists in `applicationHeler.cfm`
 
 0.1.1
 

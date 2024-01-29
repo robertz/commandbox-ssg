@@ -95,7 +95,7 @@ component extends="commandbox.system.BaseCommand" {
 		generateStatic();
 
 		print.line();
-		print.greenLine( "Compiled " & collections.all.len() & " template(s) in " & ( ( getTickCount() - buildTime ) / 1000 ) & " seconds" );
+		print.greenLine( "Compiled " & templates.len() & " template(s) in " & ( ( getTickCount() - buildTime ) / 1000 ) & " seconds" );
 		print.line();
 	}
 
@@ -334,9 +334,16 @@ component extends="commandbox.system.BaseCommand" {
 						data = structKeyList( data ).listSort( "textnocase", "asc" ).listToArray();
 					}
 				}
+
+				// set the parent prc scope for the paginated templates
+				var parent_prc = duplicate( prc );
+
+				// ensure parent template is not rendered
+				prc.published = false;
+
 				var paged = paginate( data = data, pageSize = size );
 				paged.each( ( page, index ) => {
-					var page_prc          = duplicate( prc );
+					var page_prc          = duplicate( parent_prc );
 					var rendered_content  = "";
 					page_prc[ targetKey ] = page;
 					page_prc.permalink    = page_prc.permalink.replace( "{{" & targetKey & "}}", page );
@@ -345,7 +352,7 @@ component extends="commandbox.system.BaseCommand" {
 						page_prc.append( structGet( prc.pagination.data )[ page ] );
 					}
 					getPermalink( page_prc );
-					collections.all.append( page_prc );
+					templates.append( page_prc );
 					// tag and template type processing
 					if ( page_prc.keyExists( "tags" ) && page_prc.tags.len() ) {
 						for ( var tag in page_prc.tags ) {
@@ -368,7 +375,7 @@ component extends="commandbox.system.BaseCommand" {
 	 * Write generated content to files
 	 */
 	function generateStatic(){
-		collections.all.each( ( prc ) => {
+		templates.each( ( prc ) => {
 			if ( prc.published ) {
 				var contents = renderTemplate( prc );
 				directoryCreate(
@@ -580,6 +587,7 @@ component extends="commandbox.system.BaseCommand" {
 				}
 			}
 		} catch ( any e ) {
+			fileWrite( cwd & "error.txt", serializeJSON( prc ) );
 			error( prc.inFile & " :: " & e.message );
 		}
 		// a little whitespace management

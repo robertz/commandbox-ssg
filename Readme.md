@@ -26,6 +26,11 @@ ssg build
 
 ### Changelog
 
+0.1.3
+- Exclude `_site/` directory by default. This was causing issues when passthrough folders contained markdown files.
+- Fixed some issues with pagination. The parent template will have `published` flag set to false.
+- Render function now uses `template` cache to render pages instead of `collections.all`. The `excludeFromCollections` flag should finally work correctly.
+
 0.1.2
 - applicationHelper.cfm include path should be relative for Windows
 - `onBuildReady()` event will fire once configuration has been loaded if it exists in `applicationHelper.cfm`

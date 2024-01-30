@@ -23,7 +23,7 @@ component extends="commandbox.system.BaseCommand" {
 		process     = {};
 		baseData    = { "layouts" : {}, "views" : {} };
 		config      = { "outputDir" : "_site", "passthru" : [], "ignore" : [] };
-		ignoreDirs  = [ cwd & "_includes", cwd & ".*" ];
+		ignoreDirs  = [ cwd & "_includes/", cwd & ".*", cwd & "_site/" ];
 
 		pagePoolClear();
 

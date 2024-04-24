@@ -393,7 +393,7 @@ component extends="commandbox.system.BaseCommand" {
 				} else {
 					print.greyline( "Writing file: /" & replace( prc.outFile, cwd, "", "all" ) );
 				}
-
+				// JSoup.parse( javacast( "string", contents ) )
 				fileWrite( prc.outFile, contents );
 			}
 		} );
@@ -592,7 +592,7 @@ component extends="commandbox.system.BaseCommand" {
 			error( prc.inFile & " :: " & e.message );
 		}
 		// a little whitespace management
-		return JSoup.parse( javacast( "string", renderedHtml ) );
+		return trim( JSoup.parse( renderedHtml ) );
 	}
 
 }

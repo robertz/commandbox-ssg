@@ -2,6 +2,7 @@ component extends="commandbox.system.BaseCommand" {
 
 	property name="YamlService" inject="Parser@cbyaml";
 	property name="processor" inject="processor@commandbox-ssg";
+	property name="jSoup" inject="JSoup@commandbox-ssg";
 	property name="fileSystemUtil" inject="FileSystem";
 	property name="cwd";
 	property name="templates";
@@ -591,7 +592,7 @@ component extends="commandbox.system.BaseCommand" {
 			error( prc.inFile & " :: " & e.message );
 		}
 		// a little whitespace management
-		return trim( renderedHtml );
+		return JSoup.parse( javacast( "string", renderedHtml ) );
 	}
 
 }

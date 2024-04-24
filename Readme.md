@@ -26,6 +26,9 @@ ssg build
 
 ### Changelog
 
+0.2.0
+- Leverage jSoup to tidy output 
+
 0.1.3
 - Exclude `_site/` directory by default. This was causing issues when passthrough folders contained markdown files.
 - Fixed some issues with pagination. The parent template will have `published` flag set to false.

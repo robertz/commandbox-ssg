@@ -12,7 +12,7 @@ component {
 	}
 
 	function parse( html ){
-		return variables.jsoup.parse( html, "" );
+		return variables.jsoup.parse( html );
 	}
 
 }

@@ -592,7 +592,9 @@ component extends="commandbox.system.BaseCommand" {
 			error( prc.inFile & " :: " & e.message );
 		}
 		// a little whitespace management
-		return trim( JSoup.parse( renderedHtml ) );
+		return trim(
+			( prc.keyExists( "skip_beautify" ) && prc.skip_beautify ) ? renderedHtml : JSoup.parse( renderedHtml )
+		);
 	}
 
 }

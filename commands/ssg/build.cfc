@@ -393,7 +393,6 @@ component extends="commandbox.system.BaseCommand" {
 				} else {
 					print.greyline( "Writing file: /" & replace( prc.outFile, cwd, "", "all" ) );
 				}
-				// JSoup.parse( javacast( "string", contents ) )
 				fileWrite( prc.outFile, contents );
 			}
 		} );
@@ -591,9 +590,12 @@ component extends="commandbox.system.BaseCommand" {
 			fileWrite( cwd & "error.txt", serializeJSON( prc ) );
 			error( prc.inFile & " :: " & e.message );
 		}
-		// a little whitespace management
 		return trim(
-			( prc.keyExists( "skip_beautify" ) && prc.skip_beautify ) ? renderedHtml : JSoup.parse( renderedHtml )
+			(
+				prc.keyExists( "skip_beautify" ) &&
+				isBoolean( prc.skip_beautify ) &&
+				prc.skip_beautify
+			) ? renderedHtml : JSoup.parse( renderedHtml )
 		);
 	}
 

@@ -8,7 +8,6 @@ A static site generator implemented in CommandBox
 
 [Docs](https://kisdigital.com/projects/commandbox-ssg)
 
-
 ### Installation
 
 ```bash
@@ -26,15 +25,22 @@ ssg build
 
 ### Changelog
 
+0.2.1
+
+- Adding `skip_beautify` front matter attribute to skip jSoup parsing. Fixes an issue where non-html files would get wrapped in html/body tags
+
 0.2.0
-- Leverage jSoup to tidy output 
+
+- Leverage jSoup to tidy output
 
 0.1.3
+
 - Exclude `_site/` directory by default. This was causing issues when passthrough folders contained markdown files.
 - Fixed some issues with pagination. The parent template will have `published` flag set to false.
 - Render function now uses `template` cache to render pages instead of `collections.all`. The `excludeFromCollections` flag should finally work correctly.
 
 0.1.2
+
 - applicationHelper.cfm include path should be relative for Windows
 - `onBuildReady()` event will fire once configuration has been loaded if it exists in `applicationHelper.cfm`
 - `beforeProcessCollections()` event will fire once template data has been loaded but before `processCollectionsData()` is executed if it exists in `applicationHelper.cfm`
@@ -110,6 +116,7 @@ ssg build
 - Clean up commands formatting and comments
 
 0.0.5
+
 - Adding `view` attribute to specify how a template is rendered irregardless of type. If view is not spcified it will fall back to `type`
 - ColdFusion templates will now honor `view` or `type` attributes when rendering
 - Adding `ssg_state` variable that monitors folder structure and which layouts/includes exist

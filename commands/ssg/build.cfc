@@ -388,7 +388,8 @@ component extends="commandbox.system.BaseCommand" {
 				if ( process.verbose ) {
 					print.greyline(
 						" [ " & prc.inFile & " ] -> " &
-						"/" & replace( prc.outFile, cwd, "", "all" )
+						"/" & replace( prc.outFile, cwd, "", "all" ) &
+						"  [" & prc.fileExt & "]"
 					);
 				} else {
 					print.greyline( "Writing file: /" & replace( prc.outFile, cwd, "", "all" ) );
@@ -441,7 +442,15 @@ component extends="commandbox.system.BaseCommand" {
 			outFile   = cwd & "_site/" & temp.reverse().toList( "/" );
 		} else {
 			if ( len( prc.permalink ) ) {
-				outFile = cwd & "_site" & prc.permalink;
+				outFile  = cwd & "_site" & prc.permalink;
+				// calculate the file extension
+				var stem = listLast( prc.permalink, "/" );
+				if ( stem.find( "." ) ) {
+					prc.fileExt = listLast( "." );
+				} else {
+					// a file exension wasn't specified
+					prc.fileExt = "";
+				}
 			} else {
 				outFile = getFileFromPath( prc.inFile ).listFirst( "." );
 				outDir  = getDirectoryFromPath( prc.inFile ).replace( cwd, "/" );
@@ -590,13 +599,10 @@ component extends="commandbox.system.BaseCommand" {
 			fileWrite( cwd & "error.txt", serializeJSON( prc ) );
 			error( prc.inFile & " :: " & e.message );
 		}
-		return trim(
-			(
-				prc.keyExists( "skip_beautify" ) &&
-				isBoolean( prc.skip_beautify ) &&
-				prc.skip_beautify
-			) ? renderedHtml : JSoup.parse( renderedHtml )
-		);
+
+		if ( isXML( trim( renderedHtml ) ) ) prc.fileExt = "xml";
+
+		return trim( prc.fileExt == "html" ? JSoup.parse( renderedHtml ) : renderedHtml );
 	}
 
 }

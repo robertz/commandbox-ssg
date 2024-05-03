@@ -1,6 +1,6 @@
 {
     "name":"commandbox-ssg",
-    "version":"0.2.1",
+    "version":"0.2.2",
     "location":"ForgeboxStorage",
     "author":"Robert Zehnder <robert@kisdigital.com>",
     "homepage":"https://github.com/robertz/commandbox-ssg",

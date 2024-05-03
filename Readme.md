@@ -25,6 +25,9 @@ ssg build
 
 ### Changelog
 
+0.2.2
+- Removed `skip_beautify` flag in favor on content type detection. Only html files will be parsed using jSoup
+
 0.2.1
 
 - Adding `skip_beautify` front matter attribute to skip jSoup parsing. Fixes an issue where non-html files would get wrapped in html/body tags
